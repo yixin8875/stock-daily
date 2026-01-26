@@ -1,0 +1,187 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  username  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  diaries   Diary[]
+  tags      Tag[]
+}
+
+model Diary {
+  id                String        @id @default(uuid())
+  userId            String
+  date              DateTime      @unique
+  marketTrend       MarketTrend?
+  marketVolume      MarketVolume?
+  marketComment     String?
+  hotSectors        String[]
+  profitLossAmount  Decimal?
+  profitLossPercent Decimal?
+  totalAssets       Decimal?
+  reflectionGood    String?
+  reflectionBad     String?
+  reflectionImprove String?
+  reflectionTags    String[]
+  emotionBefore     Emotion?
+  emotionDuring     Emotion?
+  emotionAfter      Emotion?
+  emotionNote       String?
+  learningNote      String?
+  learningCategory  LearningCategory?
+  riskNotes         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id])
+  trades      Trade[]
+  watchStocks WatchStock[]
+  buyPlans    BuyPlan[]
+  sellPlans   SellPlan[]
+  stopLosses  StopLoss[]
+}
+
+model Trade {
+  id          String         @id @default(uuid())
+  diaryId     String
+  stockCode   String
+  stockName   String
+  direction   TradeDirection
+  price       Decimal
+  quantity    Int
+  amount      Decimal
+  reason      String?
+  strategyTag String?
+  createdAt   DateTime       @default(now())
+
+  diary Diary @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+}
+
+model WatchStock {
+  id           String     @id @default(uuid())
+  diaryId      String
+  stockCode    String
+  stockName    String
+  watchReason  String?
+  watchLevel   WatchLevel @default(NORMAL)
+  techPosition String?
+  createdAt    DateTime   @default(now())
+
+  diary Diary @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+}
+
+model BuyPlan {
+  id               String   @id @default(uuid())
+  diaryId          String
+  stockCode        String
+  stockName        String
+  targetPrice      Decimal
+  positionPercent  Decimal
+  buyReason        String?
+  triggerCondition String?
+  createdAt        DateTime @default(now())
+
+  diary Diary @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+}
+
+model SellPlan {
+  id               String   @id @default(uuid())
+  diaryId          String
+  stockCode        String
+  stockName        String
+  targetPrice      Decimal
+  sellPercent      Decimal
+  sellReason       String?
+  triggerCondition String?
+  createdAt        DateTime @default(now())
+
+  diary Diary @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+}
+
+model StopLoss {
+  id         String   @id @default(uuid())
+  diaryId    String
+  stockCode  String
+  stockName  String
+  stopPrice  Decimal
+  costPrice  Decimal?
+  stopReason String?
+  createdAt  DateTime @default(now())
+
+  diary Diary @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+}
+
+model Tag {
+  id         String      @id @default(uuid())
+  userId     String
+  name       String
+  color      String      @default("#1890FF")
+  category   TagCategory
+  usageCount Int         @default(0)
+  createdAt  DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, name])
+}
+
+// Enums
+enum MarketTrend {
+  SURGE  // 大涨
+  RISE   // 小涨
+  FLAT   // 平盘
+  DROP   // 小跌
+  PLUNGE // 大跌
+}
+
+enum MarketVolume {
+  HIGH   // 放量
+  LOW    // 缩量
+  NORMAL // 平量
+}
+
+enum TradeDirection {
+  BUY
+  SELL
+}
+
+enum WatchLevel {
+  HIGH   // 重点关注
+  NORMAL // 一般关注
+  LOW    // 观察
+}
+
+enum Emotion {
+  EXCITED // 兴奋
+  CALM    // 平静
+  ANXIOUS // 焦虑
+  FEARFUL // 恐惧
+  GREEDY  // 贪婪
+}
+
+enum LearningCategory {
+  TECHNICAL   // 技术分析
+  FUNDAMENTAL // 基本面
+  PSYCHOLOGY  // 交易心理
+  MARKET      // 市场规律
+  OTHER       // 其他
+}
+
+enum TagCategory {
+  STRATEGY   // 策略标签
+  SECTOR     // 板块标签
+  REFLECTION // 反思标签
+  CUSTOM     // 自定义
+}

@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm create vite frontend --template react-ts)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm add antd zustand react-router-dom axios echarts echarts-for-react @ant-design/icons)",
+      "Bash(pnpm approve-builds)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm config set:*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(timeout 15 pnpm dev:*)",
+      "Bash(pnpm build)",
+      "Bash(npm init -y)",
+      "Bash(npm install express prisma @prisma/client bcryptjs jsonwebtoken cors helmet dotenv express-validator)",
+      "Bash(npm install express prisma@5 @prisma/client@5 bcryptjs jsonwebtoken cors helmet dotenv express-validator)",
+      "Bash(npm install -D typescript ts-node nodemon @types/express @types/bcryptjs @types/jsonwebtoken @types/cors @types/node)",
+      "Bash(npx prisma generate)",
+      "Bash(npm install dayjs)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(timeout 10 pnpm dev:*)",
+      "Bash(npm run build)",
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)",
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(npx eslint:*)"
+    ]
+  }
+}

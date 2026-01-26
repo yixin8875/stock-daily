@@ -1,0 +1,6 @@
+export { authService } from './auth'
+export { diaryService } from './diary'
+export { statisticsService } from './statistics'
+export { tagService } from './tag'
+export { dashboardService } from './dashboard'
+export { searchService } from './search'
