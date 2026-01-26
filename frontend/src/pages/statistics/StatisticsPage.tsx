@@ -9,6 +9,7 @@ import {
   TradeDistributionChart,
   MonthlyProfitChart,
   TradeStatsTable,
+  StockTradesSummary,
 } from './components'
 
 const { Title } = Typography
@@ -85,6 +86,9 @@ const StatisticsPage: React.FC = () => {
             <TradeStatsTable stats={tradeStats} loading={coreMetricsLoading} />
           </Col>
         </Row>
+
+        {/* 股票交易汇总 */}
+        <StockTradesSummary />
       </Space>
     </div>
   )

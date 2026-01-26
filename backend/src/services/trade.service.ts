@@ -201,7 +201,8 @@ export class TradeService {
     let sellCount = 0;
 
     trades.forEach((trade) => {
-      const amount = trade.price * trade.quantity;
+      const price = Number(trade.price);
+      const amount = price * trade.quantity;
       if (trade.direction === 'BUY') {
         totalBuyAmount += amount;
         totalBuyQuantity += trade.quantity;
@@ -292,7 +293,8 @@ export class TradeService {
       }
 
       const stat = stockStats[trade.stockCode];
-      const amount = trade.price * trade.quantity;
+      const price = Number(trade.price);
+      const amount = price * trade.quantity;
 
       if (trade.direction === 'BUY') {
         stat.buyCount++;
