@@ -12,6 +12,8 @@ import {
   Card,
   Empty,
   Tag,
+  List,
+  Dropdown,
 } from 'antd'
 import {
   PlusOutlined,
@@ -19,11 +21,14 @@ import {
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
+  MoreOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
+import type { MenuProps } from 'antd'
 import dayjs from 'dayjs'
 import { diaryService } from '@/services/diary'
 import { useDiaryStore } from '@/stores/diaryStore'
+import { useResponsive } from '@/hooks'
 import type { TodaySummary, MarketTrend } from '@/types/diary'
 
 const { Title } = Typography
@@ -57,6 +62,7 @@ interface DiaryListItem {
 const DiaryList: React.FC = () => {
   const navigate = useNavigate()
   const { setSelectedDate } = useDiaryStore()
+  const { isMobile } = useResponsive()
 
   // 列表数据状态
   const [loading, setLoading] = useState(false)
@@ -197,6 +203,57 @@ const DiaryList: React.FC = () => {
     return true
   })
 
+  // 渲染盈亏金额
+  const renderProfitAmount = (amount: number | null) => {
+    if (amount === null || amount === undefined) {
+      return <span style={{ color: '#999' }}>-</span>
+    }
+    const color = amount > 0 ? '#cf1322' : amount < 0 ? '#389e0d' : '#8c8c8c'
+    const prefix = amount > 0 ? '+' : ''
+    return (
+      <span style={{ color, fontWeight: 500 }}>
+        {prefix}{amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </span>
+    )
+  }
+
+  // 渲染盈亏比例
+  const renderProfitPercent = (percent: number | null) => {
+    if (percent === null || percent === undefined) {
+      return <span style={{ color: '#999' }}>-</span>
+    }
+    const color = percent > 0 ? '#cf1322' : percent < 0 ? '#389e0d' : '#8c8c8c'
+    const prefix = percent > 0 ? '+' : ''
+    return (
+      <span style={{ color, fontWeight: 500 }}>
+        {prefix}{percent.toFixed(2)}%
+      </span>
+    )
+  }
+
+  // 移动端操作菜单
+  const getActionMenuItems = (record: DiaryListItem): MenuProps['items'] => [
+    {
+      key: 'view',
+      icon: <EyeOutlined />,
+      label: '查看',
+      onClick: () => handleView(record.date),
+    },
+    {
+      key: 'edit',
+      icon: <EditOutlined />,
+      label: '编辑',
+      onClick: () => handleEdit(record.date),
+    },
+    {
+      key: 'delete',
+      icon: <DeleteOutlined />,
+      label: '删除',
+      danger: true,
+      onClick: () => handleDelete(record.id, record.date),
+    },
+  ]
+
   // 表格列定义
   const columns: ColumnsType<DiaryListItem> = [
     {
@@ -223,18 +280,7 @@ const DiaryList: React.FC = () => {
       key: 'profitLossAmount',
       width: 120,
       align: 'right',
-      render: (amount: number | null) => {
-        if (amount === null || amount === undefined) {
-          return <span style={{ color: '#999' }}>-</span>
-        }
-        const color = amount > 0 ? '#cf1322' : amount < 0 ? '#389e0d' : '#8c8c8c'
-        const prefix = amount > 0 ? '+' : ''
-        return (
-          <span style={{ color, fontWeight: 500 }}>
-            {prefix}{amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
-        )
-      },
+      render: renderProfitAmount,
     },
     {
       title: '盈亏比例',
@@ -242,18 +288,7 @@ const DiaryList: React.FC = () => {
       key: 'profitLossPercent',
       width: 100,
       align: 'right',
-      render: (percent: number | null) => {
-        if (percent === null || percent === undefined) {
-          return <span style={{ color: '#999' }}>-</span>
-        }
-        const color = percent > 0 ? '#cf1322' : percent < 0 ? '#389e0d' : '#8c8c8c'
-        const prefix = percent > 0 ? '+' : ''
-        return (
-          <span style={{ color, fontWeight: 500 }}>
-            {prefix}{percent.toFixed(2)}%
-          </span>
-        )
-      },
+      render: renderProfitPercent,
     },
     {
       title: '交易笔数',
@@ -299,30 +334,63 @@ const DiaryList: React.FC = () => {
     },
   ]
 
+  // 移动端列表项渲染
+  const renderMobileListItem = (item: DiaryListItem) => (
+    <List.Item
+      actions={[
+        <Dropdown menu={{ items: getActionMenuItems(item) }} trigger={['click']}>
+          <Button type="text" icon={<MoreOutlined />} />
+        </Dropdown>,
+      ]}
+    >
+      <List.Item.Meta
+        title={
+          <Space>
+            <span>{dayjs(item.date).format('YYYY-MM-DD')}</span>
+            {item.marketTrend && (
+              <Tag color={MARKET_TREND_MAP[item.marketTrend].color}>
+                {MARKET_TREND_MAP[item.marketTrend].label}
+              </Tag>
+            )}
+          </Space>
+        }
+        description={
+          <Space split="·">
+            <span>盈亏: {renderProfitAmount(item.profitLossAmount)}</span>
+            <span>{renderProfitPercent(item.profitLossPercent)}</span>
+            <span>{item.tradeCount}笔交易</span>
+          </Space>
+        }
+      />
+    </List.Item>
+  )
+
   return (
-    <div style={{ padding: '0 0 24px 0' }}>
+    <div style={{ padding: 0 }}>
       {/* 页面标题和快捷入口 */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 24,
+          marginBottom: isMobile ? 16 : 24,
+          flexWrap: 'wrap',
+          gap: 12,
         }}
       >
-        <Title level={3} style={{ margin: 0 }}>
+        <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
           交易日记
         </Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleWriteToday}>
-          写今日总结
+          {isMobile ? '记录' : '写今日总结'}
         </Button>
       </div>
 
       {/* 筛选区域 */}
-      <Card style={{ marginBottom: 16 }}>
-        <Space wrap size="middle">
-          <Space>
-            <span>日期范围：</span>
+      <Card style={{ marginBottom: 16 }} bodyStyle={{ padding: isMobile ? 12 : 24 }}>
+        <Space wrap size="middle" style={{ width: '100%' }}>
+          <Space wrap>
+            {!isMobile && <span>日期范围：</span>}
             <RangePicker
               value={dateRange}
               onChange={(dates) => {
@@ -330,10 +398,12 @@ const DiaryList: React.FC = () => {
               }}
               allowClear
               format="YYYY-MM-DD"
+              style={{ width: isMobile ? '100%' : 'auto' }}
+              placeholder={['开始日期', '结束日期']}
             />
           </Space>
           <Space>
-            <span>盈亏状态：</span>
+            {!isMobile && <span>盈亏状态：</span>}
             <Select
               value={profitStatus}
               onChange={setProfitStatus}
@@ -342,42 +412,75 @@ const DiaryList: React.FC = () => {
             />
           </Space>
           <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
-            搜索
+            {isMobile ? '' : '搜索'}
           </Button>
         </Space>
       </Card>
 
-      {/* 日记列表表格 */}
-      <Card>
-        <Table<DiaryListItem>
-          columns={columns}
-          dataSource={filteredList}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 条记录`,
-            pageSizeOptions: ['10', '20', '50'],
-          }}
-          onChange={handleTableChange}
-          locale={{
-            emptyText: (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="暂无交易日记"
-              >
-                <Button type="primary" onClick={handleWriteToday}>
-                  立即记录
-                </Button>
-              </Empty>
-            ),
-          }}
-          scroll={{ x: 800 }}
-        />
+      {/* 日记列表 */}
+      <Card bodyStyle={{ padding: isMobile ? 0 : undefined }}>
+        {isMobile ? (
+          // 移动端使用 List 组件
+          <List
+            loading={loading}
+            dataSource={filteredList}
+            renderItem={renderMobileListItem}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              onChange: (page, pageSize) => {
+                const startDate = dateRange[0]?.format('YYYY-MM-DD')
+                const endDate = dateRange[1]?.format('YYYY-MM-DD')
+                fetchDiaryList(page, pageSize, startDate, endDate)
+              },
+              size: 'small',
+            }}
+            locale={{
+              emptyText: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="暂无交易日记"
+                >
+                  <Button type="primary" onClick={handleWriteToday}>
+                    立即记录
+                  </Button>
+                </Empty>
+              ),
+            }}
+          />
+        ) : (
+          // 桌面端使用 Table 组件
+          <Table<DiaryListItem>
+            columns={columns}
+            dataSource={filteredList}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total) => `共 ${total} 条记录`,
+              pageSizeOptions: ['10', '20', '50'],
+            }}
+            onChange={handleTableChange}
+            locale={{
+              emptyText: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="暂无交易日记"
+                >
+                  <Button type="primary" onClick={handleWriteToday}>
+                    立即记录
+                  </Button>
+                </Empty>
+              ),
+            }}
+            scroll={{ x: 800 }}
+          />
+        )}
       </Card>
     </div>
   )

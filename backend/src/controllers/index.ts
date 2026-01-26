@@ -10,3 +10,5 @@ export {
 export { StatisticsController } from './statistics.controller';
 export { TagController } from './tag.controller';
 export { SearchController } from './search.controller';
+export { ExportController } from './export.controller';
+export { UserController } from './user.controller';

@@ -1,9 +1,10 @@
-import React from 'react'
-import { Card, Button, Table, Input, InputNumber, Select, Popconfirm } from 'antd'
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
+import React, { useState } from 'react'
+import { Card, Button, Table, Input, InputNumber, Select, Popconfirm, Tooltip } from 'antd'
+import { PlusOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import type { TradeRecord, TradeDirection } from '@/types/diary'
 import { useDiaryStore } from '@/stores/diaryStore'
 import { TagSelect } from '@/components'
+import TradeDetailModal from './TradeDetailModal'
 
 // 生成唯一ID
 const generateId = () => {
@@ -12,6 +13,15 @@ const generateId = () => {
 
 const TradeRecordCard: React.FC = () => {
   const { tradeRecords, addTradeRecord, removeTradeRecord, updateTradeRecord } = useDiaryStore()
+  const [detailModalVisible, setDetailModalVisible] = useState(false)
+  const [selectedStock, setSelectedStock] = useState<{ code: string; name: string } | null>(null)
+
+  const handleViewDetail = (stockCode: string, stockName: string) => {
+    if (stockCode) {
+      setSelectedStock({ code: stockCode, name: stockName })
+      setDetailModalVisible(true)
+    }
+  }
 
   const handleAddRecord = () => {
     const newRecord: TradeRecord = {
@@ -132,39 +142,63 @@ const TradeRecordCard: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 80,
+      width: 100,
       render: (_: unknown, record: TradeRecord) => (
-        <Popconfirm
-          title="确定删除这条记录吗?"
-          onConfirm={() => removeTradeRecord(record.id)}
-          okText="确定"
-          cancelText="取消"
-        >
-          <Button type="text" danger icon={<DeleteOutlined />} />
-        </Popconfirm>
+        <>
+          <Tooltip title="查看该股票交易历史">
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
+              onClick={() => handleViewDetail(record.stockCode, record.stockName)}
+              disabled={!record.stockCode}
+            />
+          </Tooltip>
+          <Popconfirm
+            title="确定删除这条记录吗?"
+            onConfirm={() => removeTradeRecord(record.id)}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Button type="text" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </>
       ),
     },
   ]
 
   return (
-    <Card
-      title="交易记录"
-      style={{ marginBottom: 16 }}
-      extra={
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddRecord}>
-          添加记录
-        </Button>
-      }
-    >
-      <Table
-        columns={columns}
-        dataSource={tradeRecords}
-        rowKey="id"
-        pagination={false}
-        scroll={{ x: 900 }}
-        locale={{ emptyText: '暂无交易记录，点击上方按钮添加' }}
-      />
-    </Card>
+    <>
+      <Card
+        title="交易记录"
+        style={{ marginBottom: 16 }}
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddRecord}>
+            添加记录
+          </Button>
+        }
+      >
+        <Table
+          columns={columns}
+          dataSource={tradeRecords}
+          rowKey="id"
+          pagination={false}
+          scroll={{ x: 900 }}
+          locale={{ emptyText: '暂无交易记录，点击上方按钮添加' }}
+        />
+      </Card>
+
+      {selectedStock && (
+        <TradeDetailModal
+          visible={detailModalVisible}
+          stockCode={selectedStock.code}
+          stockName={selectedStock.name}
+          onClose={() => {
+            setDetailModalVisible(false)
+            setSelectedStock(null)
+          }}
+        />
+      )}
+    </>
   )
 }
 

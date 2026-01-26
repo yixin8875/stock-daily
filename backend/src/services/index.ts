@@ -10,3 +10,5 @@ export {
 export { StatisticsService } from './statistics.service';
 export { TagService } from './tag.service';
 export { SearchService } from './search.service';
+export { ExportService } from './export.service';
+export { UserService } from './user.service';

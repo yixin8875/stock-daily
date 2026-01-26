@@ -23,7 +23,9 @@
       "Bash(npx tsc:*)",
       "Bash(chmod:*)",
       "Bash(find:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(npm install vite-plugin-pwa -D)",
+      "Bash(npm cache clean --force)"
     ]
   }
 }

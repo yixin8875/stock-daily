@@ -6,6 +6,8 @@ import planRoutes from './plan.routes';
 import statisticsRoutes from './statistics.routes';
 import tagRoutes from './tag.routes';
 import searchRoutes from './search.routes';
+import exportRoutes from './export.routes';
+import userRoutes from './user.routes';
 
 const router = Router();
 
@@ -17,5 +19,7 @@ router.use('/plans', planRoutes);
 router.use('/statistics', statisticsRoutes);
 router.use('/tags', tagRoutes);
 router.use('/search', searchRoutes);
+router.use('/export', exportRoutes);
+router.use('/user', userRoutes);
 
 export default router;

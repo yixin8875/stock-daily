@@ -25,3 +25,68 @@ mark {
   padding: 0 2px;
   border-radius: 2px;
 }
+
+/* 移动端响应式样式 */
+@media screen and (max-width: 768px) {
+  /* 调整 Ant Design 组件在移动端的样式 */
+  .ant-card-body {
+    padding: 12px !important;
+  }
+
+  .ant-table-wrapper .ant-table {
+    font-size: 12px;
+  }
+
+  .ant-statistic-title {
+    font-size: 12px;
+  }
+
+  .ant-statistic-content {
+    font-size: 18px;
+  }
+
+  /* 表单在移动端的样式 */
+  .ant-form-item-label {
+    padding-bottom: 4px;
+  }
+
+  /* 日期选择器在移动端的样式 */
+  .ant-picker-range {
+    width: 100%;
+  }
+
+  /* 模态框在移动端的样式 */
+  .ant-modal {
+    max-width: calc(100vw - 32px);
+    margin: 16px auto;
+  }
+
+  /* 抽屉在移动端的样式 */
+  .ant-drawer-content-wrapper {
+    max-width: 80vw;
+  }
+}
+
+/* 平板端响应式样式 */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  .ant-card-body {
+    padding: 16px !important;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 增大可点击区域 */
+  .ant-btn {
+    min-height: 36px;
+  }
+
+  .ant-btn-sm {
+    min-height: 28px;
+  }
+
+  /* 列表项增大间距 */
+  .ant-list-item {
+    padding: 12px 16px;
+  }
+}

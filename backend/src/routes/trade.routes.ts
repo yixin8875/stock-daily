@@ -8,6 +8,12 @@ const router = Router();
 // All trade routes require authentication
 router.use(authMiddleware);
 
+// Get trade statistics
+router.get('/statistics', TradeController.getStatistics);
+
+// Get stock trade history
+router.get('/stock/:stockCode/history', TradeController.getStockHistory);
+
 // Get all trades (with filters)
 router.get('/', TradeController.findAll);
 

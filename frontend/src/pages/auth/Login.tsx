@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Form, Input, Button, Card, Typography, message } from 'antd'
+import { Form, Input, Button, Card, Typography, message, theme } from 'antd'
 import { MailOutlined, LockOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/stores'
 import { authService } from '@/services'
@@ -12,6 +12,9 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
+  const {
+    token: { colorBgLayout },
+  } = theme.useToken()
 
   const onFinish = async (values: LoginParams) => {
     setLoading(true)
@@ -35,7 +38,7 @@ const Login: React.FC = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        background: '#f0f2f5',
+        background: colorBgLayout,
       }}
     >
       <Card style={{ width: 400 }}>

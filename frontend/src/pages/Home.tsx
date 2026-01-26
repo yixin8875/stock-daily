@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { Row, Col, Typography, Space } from 'antd'
 import { useDashboardStore } from '@/stores/dashboardStore'
+import { useResponsive } from '@/hooks'
 import {
   TodayOverviewCard,
   PeriodStatsCard,
@@ -20,15 +21,16 @@ const Home: React.FC = () => {
     tomorrowPlan,
     fetchDashboardData,
   } = useDashboardStore()
+  const { isMobile } = useResponsive()
 
   useEffect(() => {
     fetchDashboardData()
   }, [fetchDashboardData])
 
   return (
-    <div style={{ padding: '0 0 24px 0' }}>
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <Title level={3} style={{ margin: 0 }}>
+    <div style={{ padding: 0 }}>
+      <Space direction="vertical" size={isMobile ? 'middle' : 'large'} style={{ width: '100%' }}>
+        <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
           Stock Daily - 交易日记
         </Title>
 

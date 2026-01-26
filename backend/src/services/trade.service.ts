@@ -173,4 +173,169 @@ export class TradeService {
 
     return { message: 'Trade deleted successfully' };
   }
+
+  // 获取单只股票的交易历史
+  static async getStockHistory(userId: string, stockCode: string) {
+    const trades = await prisma.trade.findMany({
+      where: {
+        stockCode,
+        diary: { userId },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        diary: {
+          select: {
+            id: true,
+            date: true,
+          },
+        },
+      },
+    });
+
+    // 计算该股票的统计数据
+    let totalBuyAmount = 0;
+    let totalSellAmount = 0;
+    let totalBuyQuantity = 0;
+    let totalSellQuantity = 0;
+    let buyCount = 0;
+    let sellCount = 0;
+
+    trades.forEach((trade) => {
+      const amount = trade.price * trade.quantity;
+      if (trade.direction === 'BUY') {
+        totalBuyAmount += amount;
+        totalBuyQuantity += trade.quantity;
+        buyCount++;
+      } else {
+        totalSellAmount += amount;
+        totalSellQuantity += trade.quantity;
+        sellCount++;
+      }
+    });
+
+    const avgBuyPrice = totalBuyQuantity > 0 ? totalBuyAmount / totalBuyQuantity : 0;
+    const avgSellPrice = totalSellQuantity > 0 ? totalSellAmount / totalSellQuantity : 0;
+    const realizedProfit = totalSellAmount - (avgBuyPrice * totalSellQuantity);
+    const holdingQuantity = totalBuyQuantity - totalSellQuantity;
+
+    return {
+      trades,
+      statistics: {
+        totalTrades: trades.length,
+        buyCount,
+        sellCount,
+        totalBuyAmount,
+        totalSellAmount,
+        avgBuyPrice,
+        avgSellPrice,
+        realizedProfit,
+        holdingQuantity,
+        holdingCost: holdingQuantity > 0 ? avgBuyPrice * holdingQuantity : 0,
+      },
+    };
+  }
+
+  // 获取交易统计概览
+  static async getTradeStatistics(userId: string, startDate?: Date, endDate?: Date) {
+    const whereClause: any = {
+      diary: { userId },
+    };
+
+    if (startDate || endDate) {
+      whereClause.diary = {
+        ...whereClause.diary,
+        date: {},
+      };
+      if (startDate) {
+        whereClause.diary.date.gte = startDate;
+      }
+      if (endDate) {
+        whereClause.diary.date.lte = endDate;
+      }
+    }
+
+    const trades = await prisma.trade.findMany({
+      where: whereClause,
+      include: {
+        diary: {
+          select: {
+            date: true,
+          },
+        },
+      },
+    });
+
+    // 按股票分组统计
+    const stockStats: Record<string, {
+      stockCode: string;
+      stockName: string;
+      buyCount: number;
+      sellCount: number;
+      totalBuyAmount: number;
+      totalSellAmount: number;
+      totalBuyQuantity: number;
+      totalSellQuantity: number;
+    }> = {};
+
+    trades.forEach((trade) => {
+      if (!stockStats[trade.stockCode]) {
+        stockStats[trade.stockCode] = {
+          stockCode: trade.stockCode,
+          stockName: trade.stockName,
+          buyCount: 0,
+          sellCount: 0,
+          totalBuyAmount: 0,
+          totalSellAmount: 0,
+          totalBuyQuantity: 0,
+          totalSellQuantity: 0,
+        };
+      }
+
+      const stat = stockStats[trade.stockCode];
+      const amount = trade.price * trade.quantity;
+
+      if (trade.direction === 'BUY') {
+        stat.buyCount++;
+        stat.totalBuyAmount += amount;
+        stat.totalBuyQuantity += trade.quantity;
+      } else {
+        stat.sellCount++;
+        stat.totalSellAmount += amount;
+        stat.totalSellQuantity += trade.quantity;
+      }
+    });
+
+    // 计算每只股票的盈亏
+    const stockSummaries = Object.values(stockStats).map((stat) => {
+      const avgBuyPrice = stat.totalBuyQuantity > 0 ? stat.totalBuyAmount / stat.totalBuyQuantity : 0;
+      const avgSellPrice = stat.totalSellQuantity > 0 ? stat.totalSellAmount / stat.totalSellQuantity : 0;
+      const realizedProfit = stat.totalSellAmount - (avgBuyPrice * stat.totalSellQuantity);
+      const holdingQuantity = stat.totalBuyQuantity - stat.totalSellQuantity;
+
+      return {
+        ...stat,
+        avgBuyPrice,
+        avgSellPrice,
+        realizedProfit,
+        holdingQuantity,
+        holdingCost: holdingQuantity > 0 ? avgBuyPrice * holdingQuantity : 0,
+      };
+    });
+
+    // 总体统计
+    const totalStats = {
+      totalTrades: trades.length,
+      totalBuyTrades: trades.filter((t) => t.direction === 'BUY').length,
+      totalSellTrades: trades.filter((t) => t.direction === 'SELL').length,
+      totalBuyAmount: stockSummaries.reduce((sum, s) => sum + s.totalBuyAmount, 0),
+      totalSellAmount: stockSummaries.reduce((sum, s) => sum + s.totalSellAmount, 0),
+      totalRealizedProfit: stockSummaries.reduce((sum, s) => sum + s.realizedProfit, 0),
+      uniqueStocks: Object.keys(stockStats).length,
+    };
+
+    return {
+      stockSummaries: stockSummaries.sort((a, b) => b.realizedProfit - a.realizedProfit),
+      totalStats,
+    };
+  }
 }

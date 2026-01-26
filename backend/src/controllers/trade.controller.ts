@@ -114,4 +114,52 @@ export class TradeController {
       next(error);
     }
   }
+
+  // 获取单只股票的交易历史
+  static async getStockHistory(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      if (!req.userId) {
+        throw new ApiError(401, 'Unauthorized');
+      }
+
+      const stockCode = req.params.stockCode as string;
+      if (!stockCode) {
+        throw new ApiError(400, '股票代码不能为空');
+      }
+
+      const result = await TradeService.getStockHistory(req.userId, stockCode);
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // 获取交易统计概览
+  static async getStatistics(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      if (!req.userId) {
+        throw new ApiError(401, 'Unauthorized');
+      }
+
+      const startDate = req.query.startDate
+        ? new Date(req.query.startDate as string)
+        : undefined;
+      const endDate = req.query.endDate
+        ? new Date(req.query.endDate as string)
+        : undefined;
+
+      const result = await TradeService.getTradeStatistics(req.userId, startDate, endDate);
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
