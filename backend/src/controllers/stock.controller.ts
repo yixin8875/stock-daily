@@ -82,4 +82,44 @@ export class StockController {
       next(error);
     }
   }
+
+  /**
+   * 获取K线数据
+   */
+  static async getKLineData(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const code = req.params.code as string;
+      const period = (req.query.period as string) || 'daily';
+
+      if (!code) {
+        throw new ApiError(400, 'Stock code is required');
+      }
+
+      const klineData = await StockService.getKLineData(code, period);
+
+      res.json({
+        success: true,
+        data: klineData,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * 获取股票新闻
+   */
+  static async getStockNews(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const code = req.query.code as string | undefined;
+      const news = await StockService.getStockNews(code);
+
+      res.json({
+        success: true,
+        data: news,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

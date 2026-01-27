@@ -24,6 +24,23 @@ router.get('/search', StockController.searchStock);
 router.get('/quotes', StockController.getQuotes);
 
 /**
+ * @route   GET /api/stocks/news
+ * @desc    Get stock news
+ * @query   code - Optional stock code for specific stock news
+ * @access  Private
+ */
+router.get('/news', StockController.getStockNews);
+
+/**
+ * @route   GET /api/stocks/:code/kline
+ * @desc    Get K-line data for a stock
+ * @param   code - Stock code
+ * @query   period - daily/weekly/monthly
+ * @access  Private
+ */
+router.get('/:code/kline', StockController.getKLineData);
+
+/**
  * @route   GET /api/stocks/:code
  * @desc    Get single stock quote
  * @param   code - Stock code

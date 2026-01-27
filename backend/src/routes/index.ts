@@ -14,6 +14,13 @@ import reminderRoutes from './reminder.routes';
 import stockRoutes from './stock.routes';
 import analysisRoutes from './analysis.routes';
 import accountRoutes from './account.routes';
+import backtestRoutes from './backtest.routes';
+import positionRoutes from './position.routes';
+import alertRoutes from './alert.routes';
+import watchlistRoutes from './watchlist.routes';
+import earningsRoutes from './earnings.routes';
+import signalRoutes from './signal.routes';
+import portfolioRoutes from './portfolio.routes';
 
 const router = Router();
 
@@ -33,5 +40,12 @@ router.use('/reminders', reminderRoutes);
 router.use('/stocks', stockRoutes);
 router.use('/analysis', analysisRoutes);
 router.use('/accounts', accountRoutes);
+router.use('/backtest', backtestRoutes);
+router.use('/positions', positionRoutes);
+router.use('/alerts', alertRoutes);
+router.use('/watchlist', watchlistRoutes);
+router.use('/earnings', earningsRoutes);
+router.use('/signals', signalRoutes);
+router.use('/portfolio', portfolioRoutes);
 
 export default router;

@@ -26,6 +26,10 @@ import {
   SyncOutlined,
   ThunderboltOutlined,
   BankOutlined,
+  LineChartOutlined,
+  BellOutlined,
+  CalculatorOutlined,
+  FundOutlined,
 } from '@ant-design/icons'
 import { useAuthStore, useThemeStore } from '@/stores'
 
@@ -39,9 +43,19 @@ const menuItems = [
     label: '首页',
   },
   {
+    key: '/dashboard',
+    icon: <BarChartOutlined />,
+    label: '自定义仪表盘',
+  },
+  {
     key: '/quotes',
     icon: <StockOutlined />,
     label: '股票行情',
+  },
+  {
+    key: '/news',
+    icon: <FileTextOutlined />,
+    label: '财经资讯',
   },
   {
     key: '/search',
@@ -76,6 +90,11 @@ const menuItems = [
     label: '历史回顾',
   },
   {
+    key: '/calendar',
+    icon: <ScheduleOutlined />,
+    label: '交易日历',
+  },
+  {
     key: '/statistics',
     icon: <BarChartOutlined />,
     label: '统计分析',
@@ -91,9 +110,58 @@ const menuItems = [
     label: '交易复盘',
   },
   {
+    key: '/backtest',
+    icon: <ThunderboltOutlined />,
+    label: '策略回测',
+  },
+  {
     key: '/analysis',
     icon: <ThunderboltOutlined />,
     label: 'AI分析',
+  },
+  {
+    key: 'position',
+    icon: <FundOutlined />,
+    label: '持仓管理',
+    children: [
+      {
+        key: '/positions',
+        icon: <StockOutlined />,
+        label: '我的持仓',
+      },
+      {
+        key: '/positions/calculator',
+        icon: <CalculatorOutlined />,
+        label: '仓位计算器',
+      },
+      {
+        key: '/alerts',
+        icon: <BellOutlined />,
+        label: '价格提醒',
+      },
+    ],
+  },
+  {
+    key: 'profit-analysis',
+    icon: <LineChartOutlined />,
+    label: '收益分析',
+    children: [
+      {
+        key: '/profit-curve',
+        icon: <LineChartOutlined />,
+        label: '收益曲线',
+      },
+      {
+        key: '/trade-review',
+        icon: <SyncOutlined />,
+        label: '交易复盘(配对)',
+      },
+      {
+        key: '/analysis-report',
+        icon: <FileTextOutlined />,
+        label: '分析报告',
+      },
+    ],
   },
   {
     key: 'settings',

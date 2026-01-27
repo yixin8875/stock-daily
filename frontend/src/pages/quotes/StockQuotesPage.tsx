@@ -16,6 +16,7 @@ import {
   Statistic,
   Row,
   Col,
+  Segmented,
 } from 'antd'
 import {
   PlusOutlined,
@@ -26,8 +27,10 @@ import {
   ArrowUpOutlined,
   ArrowDownOutlined,
   BellOutlined,
+  LineChartOutlined,
 } from '@ant-design/icons'
-import { stockService, type StockQuote, type StockSearchResult } from '@/services'
+import { stockService, type StockQuote, type StockSearchResult, type KLineData } from '@/services'
+import { KLineChart } from '@/components'
 
 const { Title, Text } = Typography
 
@@ -50,6 +53,11 @@ const StockQuotesPage: React.FC = () => {
   const [searching, setSearching] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(true)
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [klineModalVisible, setKlineModalVisible] = useState(false)
+  const [selectedStock, setSelectedStock] = useState<WatchedStock | null>(null)
+  const [klineData, setKlineData] = useState<KLineData[]>([])
+  const [klineLoading, setKlineLoading] = useState(false)
+  const [klinePeriod, setKlinePeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily')
 
   // 从 localStorage 加载自选股
   useEffect(() => {
@@ -130,6 +138,34 @@ const StockQuotesPage: React.FC = () => {
       }
     } else {
       message.error('浏览器不支持通知功能')
+    }
+  }
+
+  // 获取K线数据
+  const fetchKlineData = async (code: string, period: 'daily' | 'weekly' | 'monthly') => {
+    setKlineLoading(true)
+    try {
+      const res = await stockService.getKLineData(code, period)
+      setKlineData(res.data.data || [])
+    } catch (error) {
+      message.error('获取K线数据失败')
+    } finally {
+      setKlineLoading(false)
+    }
+  }
+
+  // 打开K线图
+  const handleShowKline = (stock: WatchedStock) => {
+    setSelectedStock(stock)
+    setKlineModalVisible(true)
+    fetchKlineData(stock.code, klinePeriod)
+  }
+
+  // 切换K线周期
+  const handleKlinePeriodChange = (period: 'daily' | 'weekly' | 'monthly') => {
+    setKlinePeriod(period)
+    if (selectedStock) {
+      fetchKlineData(selectedStock.code, period)
     }
   }
 
@@ -278,14 +314,21 @@ const StockQuotesPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 60,
+      width: 100,
       render: (_: any, record: WatchedStock) => (
-        <Button
-          type="text"
-          danger
-          icon={<DeleteOutlined />}
-          onClick={() => handleRemoveStock(record.code)}
-        />
+        <Space>
+          <Button
+            type="text"
+            icon={<LineChartOutlined />}
+            onClick={() => handleShowKline(record)}
+          />
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => handleRemoveStock(record.code)}
+          />
+        </Space>
       ),
     },
   ]
@@ -423,6 +466,38 @@ const StockQuotesPage: React.FC = () => {
           ) : searchKeyword && !searching ? (
             <Empty description="未找到相关股票" />
           ) : null}
+        </Spin>
+      </Modal>
+
+      {/* K线图弹窗 */}
+      <Modal
+        title={selectedStock ? `${selectedStock.name} (${selectedStock.code}) K线图` : 'K线图'}
+        open={klineModalVisible}
+        onCancel={() => {
+          setKlineModalVisible(false)
+          setSelectedStock(null)
+          setKlineData([])
+        }}
+        footer={null}
+        width={900}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Segmented
+            value={klinePeriod}
+            onChange={(value) => handleKlinePeriodChange(value as 'daily' | 'weekly' | 'monthly')}
+            options={[
+              { label: '日K', value: 'daily' },
+              { label: '周K', value: 'weekly' },
+              { label: '月K', value: 'monthly' },
+            ]}
+          />
+        </div>
+        <Spin spinning={klineLoading}>
+          {klineData.length > 0 ? (
+            <KLineChart data={klineData} height={500} />
+          ) : (
+            <Empty description="暂无K线数据" />
+          )}
         </Spin>
       </Modal>
     </div>

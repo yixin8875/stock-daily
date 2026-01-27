@@ -4,14 +4,10 @@ import { authMiddleware } from '../middlewares';
 
 const router = Router();
 
-// All analysis routes require authentication
 router.use(authMiddleware);
 
-/**
- * @route   GET /api/analysis
- * @desc    Get AI analysis results
- * @access  Private
- */
-router.get('/', AnalysisController.getAnalysis);
+router.get('/profit-curve', AnalysisController.getProfitCurve);
+router.get('/reviews', AnalysisController.getTradeReviews);
+router.get('/report', AnalysisController.generateReport);
 
 export default router;

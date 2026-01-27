@@ -19,6 +19,11 @@ model User {
   diaries   Diary[]
   tags      Tag[]
   tradingAccounts TradingAccount[]
+  positions   Position[]
+  priceAlerts PriceAlert[]
+  watchlists  Watchlist[]
+  earningsCalendars EarningsCalendar[]
+  tradeSignals TradeSignal[]
 }
 
 // 交易账户模型
@@ -157,6 +162,134 @@ model Tag {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, name])
+}
+
+// 持仓记录
+model Position {
+  id          String   @id @default(uuid())
+  userId      String
+  stockCode   String
+  stockName   String
+  quantity    Int      // 持仓数量
+  costPrice   Decimal  // 成本价
+  totalCost   Decimal  // 总成本
+  targetPrice Decimal? // 目标价
+  stopPrice   Decimal? // 止损价
+  industry    String?  // 行业板块
+  notes       String?  // 备注
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id])
+  priceAlerts PriceAlert[]
+
+  @@unique([userId, stockCode])
+}
+
+// 自选股列表
+model Watchlist {
+  id          String   @id @default(uuid())
+  userId      String
+  stockCode   String
+  stockName   String
+  industry    String?  // 行业板块
+  addPrice    Decimal? // 添加时价格
+  targetPrice Decimal? // 目标价
+  stopPrice   Decimal? // 止损价
+  notes       String?  // 备注
+  sortOrder   Int      @default(0) // 排序
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, stockCode])
+  @@index([userId, sortOrder])
+}
+
+// 财报日历
+model EarningsCalendar {
+  id            String   @id @default(uuid())
+  userId        String
+  stockCode     String
+  stockName     String
+  reportDate    DateTime // 财报发布日期
+  reportType    String   // 年报/半年报/季报
+  isNotified    Boolean  @default(false) // 是否已通知
+  notes         String?  // 备注
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, reportDate])
+}
+
+// 交易信号
+model TradeSignal {
+  id          String      @id @default(uuid())
+  userId      String
+  stockCode   String
+  stockName   String
+  signalType  SignalType  // 信号类型
+  indicator   String      // 指标名称 (MA, MACD, KDJ等)
+  direction   SignalDirection // 买入/卖出信号
+  price       Decimal     // 触发价格
+  description String?     // 信号描述
+  isRead      Boolean     @default(false) // 是否已读
+  triggeredAt DateTime    @default(now()) // 触发时间
+  createdAt   DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead, triggeredAt])
+}
+
+// 信号类型
+enum SignalType {
+  MA_CROSS      // 均线交叉
+  MACD_CROSS    // MACD交叉
+  KDJ_SIGNAL    // KDJ信号
+  RSI_SIGNAL    // RSI超买超卖
+  VOLUME_BREAK  // 放量突破
+  PRICE_BREAK   // 价格突破
+  CUSTOM        // 自定义
+}
+
+// 信号方向
+enum SignalDirection {
+  BUY   // 买入信号
+  SELL  // 卖出信号
+}
+
+// 价格提醒
+model PriceAlert {
+  id          String     @id @default(uuid())
+  userId      String
+  positionId  String?    // 关联持仓（可选）
+  stockCode   String
+  stockName   String
+  alertType   AlertType  // 提醒类型
+  targetPrice Decimal    // 目标价格
+  isTriggered Boolean    @default(false) // 是否已触发
+  isEnabled   Boolean    @default(true)  // 是否启用
+  notes       String?    // 备注
+  triggeredAt DateTime?  // 触发时间
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  position Position? @relation(fields: [positionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, isEnabled, isTriggered])
+}
+
+// 提醒类型
+enum AlertType {
+  TAKE_PROFIT  // 止盈
+  STOP_LOSS    // 止损
+  PRICE_ABOVE  // 价格高于
+  PRICE_BELOW  // 价格低于
 }
 
 // Enums

@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { MainLayout, ProtectedRoute } from '@/components'
-import { Home, Login, Register, DiaryList, TodaySummary, TomorrowPlan, HistoryPage, StatisticsPage, TagManagement, SearchPage, DataExport, UserSettings, ReportPage, ReviewPage, AIAnalysisPage, AccountsPage, StockQuotesPage } from '@/pages'
+import { Home, Login, Register, DiaryList, TodaySummary, TomorrowPlan, HistoryPage, StatisticsPage, TagManagement, SearchPage, DataExport, UserSettings, ReportPage, ReviewPage, AIAnalysisPage, AccountsPage, StockQuotesPage, TradeCalendarPage, NewsPage, BacktestPage, CustomDashboard, ProfitCurvePage, TradeReviewPage, AnalysisReportPage, PositionPage, PositionCalculator, AlertPage } from '@/pages'
 
 const router = createBrowserRouter([
   {
@@ -22,6 +22,10 @@ const router = createBrowserRouter([
             element: <Home />,
           },
           {
+            path: '/dashboard',
+            element: <CustomDashboard />,
+          },
+          {
             path: '/diary',
             element: <DiaryList />,
           },
@@ -38,6 +42,10 @@ const router = createBrowserRouter([
             element: <HistoryPage />,
           },
           {
+            path: '/calendar',
+            element: <TradeCalendarPage />,
+          },
+          {
             path: '/statistics',
             element: <StatisticsPage />,
           },
@@ -48,6 +56,10 @@ const router = createBrowserRouter([
           {
             path: '/review',
             element: <ReviewPage />,
+          },
+          {
+            path: '/backtest',
+            element: <BacktestPage />,
           },
           {
             path: '/settings/tags',
@@ -76,6 +88,34 @@ const router = createBrowserRouter([
           {
             path: '/quotes',
             element: <StockQuotesPage />,
+          },
+          {
+            path: '/news',
+            element: <NewsPage />,
+          },
+          {
+            path: '/positions',
+            element: <PositionPage />,
+          },
+          {
+            path: '/positions/calculator',
+            element: <PositionCalculator />,
+          },
+          {
+            path: '/alerts',
+            element: <AlertPage />,
+          },
+          {
+            path: '/profit-curve',
+            element: <ProfitCurvePage />,
+          },
+          {
+            path: '/trade-review',
+            element: <TradeReviewPage />,
+          },
+          {
+            path: '/analysis-report',
+            element: <AnalysisReportPage />,
           },
         ],
       },

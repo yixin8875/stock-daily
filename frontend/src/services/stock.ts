@@ -21,6 +21,25 @@ export interface StockSearchResult {
   market: string
 }
 
+export interface KLineData {
+  date: string
+  open: number
+  close: number
+  high: number
+  low: number
+  volume: number
+  amount: number
+}
+
+export interface StockNews {
+  id: string
+  title: string
+  summary: string
+  source: string
+  time: string
+  url: string
+}
+
 export const stockService = {
   // 获取单只股票行情
   getQuote: (code: string) => {
@@ -38,6 +57,20 @@ export const stockService = {
   searchStock: (keyword: string) => {
     return request.get<ApiResponse<StockSearchResult[]>>('/stocks/search', {
       params: { keyword },
+    })
+  },
+
+  // 获取K线数据
+  getKLineData: (code: string, period: 'daily' | 'weekly' | 'monthly' = 'daily') => {
+    return request.get<ApiResponse<KLineData[]>>(`/stocks/${code}/kline`, {
+      params: { period },
+    })
+  },
+
+  // 获取股票新闻
+  getStockNews: (code?: string) => {
+    return request.get<ApiResponse<StockNews[]>>('/stocks/news', {
+      params: code ? { code } : {},
     })
   },
 }

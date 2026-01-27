@@ -78,6 +78,18 @@ interface SuccessResponse<T> {
   data?: T
 }
 
+// 交易列表响应类型
+interface TradeListResponse {
+  success: boolean
+  data: Trade[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
 export const tradeService = {
   // 获取单只股票的交易历史
   getStockHistory: (stockCode: string) => {
@@ -97,11 +109,11 @@ export const tradeService = {
     startDate?: string
     endDate?: string
   }) => {
-    return request.get<SuccessResponse<never> & { data: Trade[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>('/trades', { params })
+    return request.get<TradeListResponse>('/trades', { params })
   },
 
   // 获取单个交易详情
   getTradeById: (id: string) => {
-    return request.get<SuccessResponse<never> & { data: Trade }>(`/trades/${id}`)
+    return request.get<SuccessResponse<Trade>>(`/trades/${id}`)
   },
 }

@@ -1,395 +1,338 @@
-import { prisma } from '../app';
+import { PrismaClient, TradeDirection } from '@prisma/client';
+import dayjs from 'dayjs';
 
-export interface TradingInsight {
-  type: 'success' | 'warning' | 'info';
-  title: string;
-  description: string;
-  suggestion?: string;
+const prisma = new PrismaClient();
+
+export interface ProfitPoint {
+  date: string;
+  profit: number;
+  profitRate: number;
+  cumulativeProfit: number;
+  cumulativeProfitRate: number;
 }
 
-export interface TradingPattern {
-  pattern: string;
-  frequency: number;
-  avgProfit: number;
-  winRate: number;
+export interface TradeReview {
+  id: string;
+  stockCode: string;
+  stockName: string;
+  buyDate: string;
+  buyPrice: number;
+  buyQuantity: number;
+  buyReason: string | null;
+  sellDate: string | null;
+  sellPrice: number | null;
+  sellQuantity: number | null;
+  sellReason: string | null;
+  holdingDays: number;
+  profit: number | null;
+  profitRate: number | null;
+  status: 'open' | 'closed';
 }
 
-export interface RiskAlert {
-  level: 'high' | 'medium' | 'low';
-  type: string;
-  message: string;
-  relatedStocks?: string[];
+export interface PeriodReport {
+  period: { start: string; end: string };
+  summary: {
+    totalTrades: number;
+    winningTrades: number;
+    losingTrades: number;
+    winRate: number;
+    totalProfit: number;
+    avgProfit: number;
+    avgLoss: number;
+    maxProfit: number;
+    maxLoss: number;
+    profitFactor: number;
+  };
+  dailyProfits: ProfitPoint[];
+  topWinners: TradeReview[];
+  topLosers: TradeReview[];
+  stockStats: {
+    stockCode: string;
+    stockName: string;
+    tradeCount: number;
+    profit: number;
+    winRate: number;
+  }[];
 }
 
-export interface AIAnalysisResult {
-  insights: TradingInsight[];
-  patterns: TradingPattern[];
-  riskAlerts: RiskAlert[];
-  suggestions: string[];
-  summary: string;
-}
-
-export class AIAnalysisService {
+export class AnalysisService {
   /**
-   * 获取AI分析结果
+   * 获取收益曲线数据
    */
-  static async getAnalysis(userId: string): Promise<AIAnalysisResult> {
-    const [insights, patterns, riskAlerts] = await Promise.all([
-      this.generateInsights(userId),
-      this.analyzePatterns(userId),
-      this.detectRisks(userId),
-    ]);
-
-    const suggestions = this.generateSuggestions(insights, patterns, riskAlerts);
-    const summary = this.generateSummary(insights, patterns, riskAlerts);
-
-    return {
-      insights,
-      patterns,
-      riskAlerts,
-      suggestions,
-      summary,
-    };
-  }
-
-  /**
-   * 生成交易洞察
-   */
-  private static async generateInsights(userId: string): Promise<TradingInsight[]> {
-    const insights: TradingInsight[] = [];
-
-    // 获取最近30天的日记数据
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
+  static async getProfitCurve(
+    userId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<ProfitPoint[]> {
     const diaries = await prisma.diary.findMany({
       where: {
         userId,
-        date: { gte: thirtyDaysAgo },
-      },
-      include: {
-        trades: true,
-      },
-      orderBy: { date: 'desc' },
-    });
-
-    if (diaries.length === 0) {
-      return [{
-        type: 'info',
-        title: '数据不足',
-        description: '暂无足够的交易数据进行分析，请继续记录交易日记。',
-      }];
-    }
-
-    // 分析胜率趋势
-    const recentDiaries = diaries.slice(0, 10);
-    const olderDiaries = diaries.slice(10, 20);
-
-    if (recentDiaries.length >= 5 && olderDiaries.length >= 5) {
-      const recentWinRate = this.calculateWinRate(recentDiaries);
-      const olderWinRate = this.calculateWinRate(olderDiaries);
-
-      if (recentWinRate > olderWinRate + 10) {
-        insights.push({
-          type: 'success',
-          title: '胜率提升',
-          description: `近期胜率 ${recentWinRate.toFixed(1)}%，较之前提升了 ${(recentWinRate - olderWinRate).toFixed(1)}%`,
-          suggestion: '继续保持当前的交易策略和纪律。',
-        });
-      } else if (recentWinRate < olderWinRate - 10) {
-        insights.push({
-          type: 'warning',
-          title: '胜率下降',
-          description: `近期胜率 ${recentWinRate.toFixed(1)}%，较之前下降了 ${(olderWinRate - recentWinRate).toFixed(1)}%`,
-          suggestion: '建议回顾近期交易，分析失败原因，适当降低仓位。',
-        });
-      }
-    }
-
-    // 分析情绪与收益关系
-    const emotionStats = await this.analyzeEmotionProfit(userId);
-    const bestEmotion = emotionStats.sort((a, b) => b.winRate - a.winRate)[0];
-    const worstEmotion = emotionStats.sort((a, b) => a.winRate - b.winRate)[0];
-
-    if (bestEmotion && worstEmotion && bestEmotion.emotion !== worstEmotion.emotion) {
-      insights.push({
-        type: 'info',
-        title: '情绪影响分析',
-        description: `${bestEmotion.label}时胜率最高(${bestEmotion.winRate.toFixed(1)}%)，${worstEmotion.label}时胜率最低(${worstEmotion.winRate.toFixed(1)}%)`,
-        suggestion: `建议在${worstEmotion.label}时减少交易或降低仓位。`,
-      });
-    }
-
-    // 分析连续亏损
-    let maxConsecutiveLoss = 0;
-    let currentLossStreak = 0;
-    for (const diary of diaries) {
-      if (diary.profitLossAmount && Number(diary.profitLossAmount) < 0) {
-        currentLossStreak++;
-        maxConsecutiveLoss = Math.max(maxConsecutiveLoss, currentLossStreak);
-      } else {
-        currentLossStreak = 0;
-      }
-    }
-
-    if (maxConsecutiveLoss >= 3) {
-      insights.push({
-        type: 'warning',
-        title: '连续亏损提醒',
-        description: `近期出现过${maxConsecutiveLoss}天连续亏损`,
-        suggestion: '连续亏损后建议暂停交易1-2天，调整心态后再入场。',
-      });
-    }
-
-    // 分析交易频率
-    const avgTradesPerDay = diaries.reduce((sum, d) => sum + d.trades.length, 0) / diaries.length;
-    if (avgTradesPerDay > 5) {
-      insights.push({
-        type: 'warning',
-        title: '交易频率过高',
-        description: `平均每天交易 ${avgTradesPerDay.toFixed(1)} 次，可能存在过度交易`,
-        suggestion: '建议减少交易频率，专注于高确定性机会。',
-      });
-    }
-
-    return insights;
-  }
-
-  /**
-   * 分析交易模式
-   */
-  private static async analyzePatterns(userId: string): Promise<TradingPattern[]> {
-    const patterns: TradingPattern[] = [];
-
-    // 获取所有交易记录
-    const trades = await prisma.trade.findMany({
-      where: {
-        diary: { userId },
-      },
-      include: {
-        diary: {
-          select: {
-            date: true,
-            profitLossAmount: true,
-            profitLossPercent: true,
-          },
+        date: {
+          gte: startDate ? new Date(startDate) : undefined,
+          lte: endDate ? new Date(endDate) : undefined,
         },
       },
-    });
-
-    // 按策略标签分组分析
-    const strategyStats = new Map<string, { count: number; profits: number[]; wins: number }>();
-
-    for (const trade of trades) {
-      const strategy = trade.strategyTag || '无策略';
-      const profit = trade.diary.profitLossAmount ? Number(trade.diary.profitLossAmount) : 0;
-
-      const stats = strategyStats.get(strategy) || { count: 0, profits: [], wins: 0 };
-      stats.count++;
-      stats.profits.push(profit);
-      if (profit > 0) stats.wins++;
-      strategyStats.set(strategy, stats);
-    }
-
-    for (const [strategy, stats] of strategyStats) {
-      if (stats.count >= 3) {
-        const avgProfit = stats.profits.reduce((a, b) => a + b, 0) / stats.count;
-        const winRate = (stats.wins / stats.count) * 100;
-
-        patterns.push({
-          pattern: strategy,
-          frequency: stats.count,
-          avgProfit: Math.round(avgProfit * 100) / 100,
-          winRate: Math.round(winRate * 100) / 100,
-        });
-      }
-    }
-
-    // 按收益排序
-    patterns.sort((a, b) => b.avgProfit - a.avgProfit);
-
-    return patterns.slice(0, 5);
-  }
-
-  /**
-   * 检测风险
-   */
-  private static async detectRisks(userId: string): Promise<RiskAlert[]> {
-    const alerts: RiskAlert[] = [];
-
-    // 获取最近的日记
-    const recentDiary = await prisma.diary.findFirst({
-      where: { userId },
-      orderBy: { date: 'desc' },
-      include: {
-        trades: true,
-        stopLosses: true,
-      },
-    });
-
-    if (!recentDiary) return alerts;
-
-    // 检查止损设置
-    const tradesWithoutStopLoss = recentDiary.trades.filter(
-      trade => trade.direction === 'BUY' && !recentDiary.stopLosses.some(sl => sl.stockCode === trade.stockCode)
-    );
-
-    if (tradesWithoutStopLoss.length > 0) {
-      alerts.push({
-        level: 'high',
-        type: '止损缺失',
-        message: `有 ${tradesWithoutStopLoss.length} 只股票未设置止损`,
-        relatedStocks: tradesWithoutStopLoss.map(t => `${t.stockName}(${t.stockCode})`),
-      });
-    }
-
-    // 检查单只股票仓位
-    const totalAmount = recentDiary.trades.reduce((sum, t) => sum + Number(t.amount), 0);
-    for (const trade of recentDiary.trades) {
-      const position = (Number(trade.amount) / totalAmount) * 100;
-      if (position > 30) {
-        alerts.push({
-          level: 'medium',
-          type: '仓位过重',
-          message: `${trade.stockName} 仓位占比 ${position.toFixed(1)}%，超过30%`,
-          relatedStocks: [`${trade.stockName}(${trade.stockCode})`],
-        });
-      }
-    }
-
-    // 检查连续亏损
-    const recentDiaries = await prisma.diary.findMany({
-      where: { userId },
-      orderBy: { date: 'desc' },
-      take: 5,
-      select: { profitLossAmount: true },
-    });
-
-    const consecutiveLosses = recentDiaries.filter(d => d.profitLossAmount && Number(d.profitLossAmount) < 0).length;
-    if (consecutiveLosses >= 3) {
-      alerts.push({
-        level: 'high',
-        type: '连续亏损',
-        message: `最近5天中有${consecutiveLosses}天亏损，建议暂停交易`,
-      });
-    }
-
-    return alerts;
-  }
-
-  /**
-   * 分析情绪与收益关系
-   */
-  private static async analyzeEmotionProfit(userId: string) {
-    const diaries = await prisma.diary.findMany({
-      where: { userId },
+      orderBy: { date: 'asc' },
       select: {
-        emotionBefore: true,
+        date: true,
         profitLossAmount: true,
+        profitLossPercent: true,
+        totalAssets: true,
       },
     });
 
-    const emotionLabels: Record<string, string> = {
-      EXCITED: '兴奋',
-      CALM: '平静',
-      ANXIOUS: '焦虑',
-      FEARFUL: '恐惧',
-      GREEDY: '贪婪',
-    };
+    let cumulativeProfit = 0;
+    const initialAssets = 100000;
 
-    const stats = new Map<string, { total: number; wins: number }>();
+    return diaries.map(diary => {
+      const profit = Number(diary.profitLossAmount || 0);
+      const profitRate = Number(diary.profitLossPercent || 0);
+      cumulativeProfit += profit;
+      const cumulativeProfitRate = (cumulativeProfit / initialAssets) * 100;
 
-    for (const diary of diaries) {
-      if (diary.emotionBefore && diary.profitLossAmount !== null) {
-        const emotion = diary.emotionBefore;
-        const profit = Number(diary.profitLossAmount);
+      return {
+        date: dayjs(diary.date).format('YYYY-MM-DD'),
+        profit: Math.round(profit * 100) / 100,
+        profitRate: Math.round(profitRate * 100) / 100,
+        cumulativeProfit: Math.round(cumulativeProfit * 100) / 100,
+        cumulativeProfitRate: Math.round(cumulativeProfitRate * 100) / 100,
+      };
+    });
+  }
 
-        const existing = stats.get(emotion) || { total: 0, wins: 0 };
-        existing.total++;
-        if (profit > 0) existing.wins++;
-        stats.set(emotion, existing);
+  /**
+   * 获取交易复盘数据
+   */
+  static async getTradeReviews(
+    userId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<TradeReview[]> {
+    const diaries = await prisma.diary.findMany({
+      where: {
+        userId,
+        date: {
+          gte: startDate ? new Date(startDate) : undefined,
+          lte: endDate ? new Date(endDate) : undefined,
+        },
+      },
+      include: { trades: true },
+      orderBy: { date: 'asc' },
+    });
+
+    // 按股票分组交易
+    const stockTrades = new Map<string, any[]>();
+    diaries.forEach(diary => {
+      diary.trades.forEach(trade => {
+        const key = trade.stockCode;
+        if (!stockTrades.has(key)) {
+          stockTrades.set(key, []);
+        }
+        stockTrades.get(key)!.push({
+          ...trade,
+          tradeDate: diary.date,
+        });
+      });
+    });
+
+    const reviews: TradeReview[] = [];
+
+    stockTrades.forEach((trades, stockCode) => {
+      const buys = trades.filter(t => t.direction === 'BUY').sort((a, b) => 
+        new Date(a.tradeDate).getTime() - new Date(b.tradeDate).getTime()
+      );
+      const sells = trades.filter(t => t.direction === 'SELL').sort((a, b) => 
+        new Date(a.tradeDate).getTime() - new Date(b.tradeDate).getTime()
+      );
+
+      let buyIndex = 0;
+      let sellIndex = 0;
+
+      while (buyIndex < buys.length) {
+        const buy = buys[buyIndex];
+        const sell = sellIndex < sells.length && sells[sellIndex].tradeDate >= buy.tradeDate
+          ? sells[sellIndex]
+          : null;
+
+        const buyDate = dayjs(buy.tradeDate);
+        const sellDate = sell ? dayjs(sell.tradeDate) : dayjs();
+        const holdingDays = sellDate.diff(buyDate, 'day');
+
+        let profit = null;
+        let profitRate = null;
+        if (sell) {
+          const buyPrice = Number(buy.price);
+          const sellPrice = Number(sell.price);
+          const quantity = Math.min(buy.quantity, sell.quantity);
+          profit = (sellPrice - buyPrice) * quantity;
+          profitRate = ((sellPrice - buyPrice) / buyPrice) * 100;
+        }
+
+        reviews.push({
+          id: buy.id,
+          stockCode: buy.stockCode,
+          stockName: buy.stockName,
+          buyDate: buyDate.format('YYYY-MM-DD'),
+          buyPrice: Number(buy.price),
+          buyQuantity: buy.quantity,
+          buyReason: buy.reason,
+          sellDate: sell ? sellDate.format('YYYY-MM-DD') : null,
+          sellPrice: sell ? Number(sell.price) : null,
+          sellQuantity: sell ? sell.quantity : null,
+          sellReason: sell ? sell.reason : null,
+          holdingDays,
+          profit: profit !== null ? Math.round(profit * 100) / 100 : null,
+          profitRate: profitRate !== null ? Math.round(profitRate * 100) / 100 : null,
+          status: sell ? 'closed' : 'open',
+        });
+
+        buyIndex++;
+        if (sell) sellIndex++;
       }
+    });
+
+    return reviews.sort((a, b) => 
+      new Date(b.buyDate).getTime() - new Date(a.buyDate).getTime()
+    );
+  }
+
+  /**
+   * 生成周报/月报
+   */
+  static async generateReport(
+    userId: string,
+    periodType: 'week' | 'month',
+    date?: string
+  ): Promise<PeriodReport> {
+    const targetDate = date ? dayjs(date) : dayjs();
+    let startDate: dayjs.Dayjs;
+    let endDate: dayjs.Dayjs;
+
+    if (periodType === 'week') {
+      startDate = targetDate.startOf('week');
+      endDate = targetDate.endOf('week');
+    } else {
+      startDate = targetDate.startOf('month');
+      endDate = targetDate.endOf('month');
     }
 
-    return Array.from(stats.entries()).map(([emotion, data]) => ({
-      emotion,
-      label: emotionLabels[emotion] || emotion,
-      winRate: data.total > 0 ? (data.wins / data.total) * 100 : 0,
+    const startStr = startDate.format('YYYY-MM-DD');
+    const endStr = endDate.format('YYYY-MM-DD');
+
+    // 获取收益曲线
+    const dailyProfits = await this.getProfitCurve(userId, startStr, endStr);
+
+    // 获取交易复盘
+    const reviews = await this.getTradeReviews(userId, startStr, endStr);
+    const closedTrades = reviews.filter(r => r.status === 'closed');
+
+    // 计算统计数据
+    const winningTrades = closedTrades.filter(t => (t.profit || 0) > 0);
+    const losingTrades = closedTrades.filter(t => (t.profit || 0) < 0);
+
+    const totalProfit = closedTrades.reduce((sum, t) => sum + (t.profit || 0), 0);
+    const grossProfit = winningTrades.reduce((sum, t) => sum + (t.profit || 0), 0);
+    const grossLoss = Math.abs(losingTrades.reduce((sum, t) => sum + (t.profit || 0), 0));
+
+    const profits = closedTrades.map(t => t.profit || 0);
+    const maxProfit = profits.length > 0 ? Math.max(...profits) : 0;
+    const maxLoss = profits.length > 0 ? Math.min(...profits) : 0;
+
+    // 按股票统计
+    const stockStatsMap = new Map<string, any>();
+    closedTrades.forEach(trade => {
+      const key = trade.stockCode;
+      if (!stockStatsMap.has(key)) {
+        stockStatsMap.set(key, {
+          stockCode: trade.stockCode,
+          stockName: trade.stockName,
+          tradeCount: 0,
+          profit: 0,
+          wins: 0,
+        });
+      }
+      const stats = stockStatsMap.get(key)!;
+      stats.tradeCount++;
+      stats.profit += trade.profit || 0;
+      if ((trade.profit || 0) > 0) stats.wins++;
+    });
+
+    const stockStats = Array.from(stockStatsMap.values()).map(s => ({
+      ...s,
+      profit: Math.round(s.profit * 100) / 100,
+      winRate: s.tradeCount > 0 ? Math.round((s.wins / s.tradeCount) * 10000) / 100 : 0,
     }));
+
+    return {
+      period: { start: startStr, end: endStr },
+      summary: {
+        totalTrades: closedTrades.length,
+        winningTrades: winningTrades.length,
+        losingTrades: losingTrades.length,
+        winRate: closedTrades.length > 0
+          ? Math.round((winningTrades.length / closedTrades.length) * 10000) / 100
+          : 0,
+        totalProfit: Math.round(totalProfit * 100) / 100,
+        avgProfit: winningTrades.length > 0
+          ? Math.round((grossProfit / winningTrades.length) * 100) / 100
+          : 0,
+        avgLoss: losingTrades.length > 0
+          ? Math.round((grossLoss / losingTrades.length) * 100) / 100
+          : 0,
+        maxProfit: Math.round(maxProfit * 100) / 100,
+        maxLoss: Math.round(maxLoss * 100) / 100,
+        profitFactor: grossLoss > 0
+          ? Math.round((grossProfit / grossLoss) * 100) / 100
+          : grossProfit > 0 ? Infinity : 0,
+      },
+      dailyProfits,
+      topWinners: closedTrades
+        .filter(t => (t.profit || 0) > 0)
+        .sort((a, b) => (b.profit || 0) - (a.profit || 0))
+        .slice(0, 5),
+      topLosers: closedTrades
+        .filter(t => (t.profit || 0) < 0)
+        .sort((a, b) => (a.profit || 0) - (b.profit || 0))
+        .slice(0, 5),
+      stockStats: stockStats.sort((a, b) => b.profit - a.profit),
+    };
   }
 
   /**
-   * 计算胜率
+   * 计算最大回撤
    */
-  private static calculateWinRate(diaries: any[]): number {
-    const withProfit = diaries.filter(d => d.profitLossAmount !== null);
-    if (withProfit.length === 0) return 0;
+  static calculateMaxDrawdown(profitCurve: ProfitPoint[]): {
+    maxDrawdown: number;
+    maxDrawdownRate: number;
+    drawdownStart: string;
+    drawdownEnd: string;
+  } {
+    let peak = 0;
+    let maxDrawdown = 0;
+    let maxDrawdownRate = 0;
+    let drawdownStart = '';
+    let drawdownEnd = '';
+    let currentPeakDate = '';
 
-    const wins = withProfit.filter(d => Number(d.profitLossAmount) > 0).length;
-    return (wins / withProfit.length) * 100;
-  }
-
-  /**
-   * 生成建议
-   */
-  private static generateSuggestions(
-    insights: TradingInsight[],
-    patterns: TradingPattern[],
-    riskAlerts: RiskAlert[]
-  ): string[] {
-    const suggestions: string[] = [];
-
-    // 基于洞察生成建议
-    for (const insight of insights) {
-      if (insight.suggestion) {
-        suggestions.push(insight.suggestion);
+    profitCurve.forEach(point => {
+      if (point.cumulativeProfit > peak) {
+        peak = point.cumulativeProfit;
+        currentPeakDate = point.date;
       }
-    }
+      const drawdown = peak - point.cumulativeProfit;
+      if (drawdown > maxDrawdown) {
+        maxDrawdown = drawdown;
+        maxDrawdownRate = peak > 0 ? (drawdown / peak) * 100 : 0;
+        drawdownStart = currentPeakDate;
+        drawdownEnd = point.date;
+      }
+    });
 
-    // 基于模式生成建议
-    const bestPattern = patterns.find(p => p.winRate > 60 && p.avgProfit > 0);
-    if (bestPattern) {
-      suggestions.push(`"${bestPattern.pattern}"策略表现优秀，建议继续使用并加大该策略的仓位。`);
-    }
-
-    const worstPattern = patterns.find(p => p.winRate < 40 || p.avgProfit < 0);
-    if (worstPattern) {
-      suggestions.push(`"${worstPattern.pattern}"策略表现不佳，建议减少使用或优化该策略。`);
-    }
-
-    // 基于风险生成建议
-    const highRisks = riskAlerts.filter(r => r.level === 'high');
-    if (highRisks.length > 0) {
-      suggestions.push('存在高风险警告，建议立即处理后再进行新的交易。');
-    }
-
-    return suggestions.slice(0, 5);
-  }
-
-  /**
-   * 生成总结
-   */
-  private static generateSummary(
-    insights: TradingInsight[],
-    patterns: TradingPattern[],
-    riskAlerts: RiskAlert[]
-  ): string {
-    const successCount = insights.filter(i => i.type === 'success').length;
-    const warningCount = insights.filter(i => i.type === 'warning').length;
-    const highRiskCount = riskAlerts.filter(r => r.level === 'high').length;
-
-    if (highRiskCount > 0) {
-      return `当前存在${highRiskCount}个高风险警告，建议谨慎操作，优先处理风险问题。`;
-    }
-
-    if (warningCount > successCount) {
-      return '近期交易表现有待改善，建议回顾交易策略，适当降低仓位和交易频率。';
-    }
-
-    if (successCount > 0) {
-      return '近期交易表现良好，继续保持当前的交易纪律和策略。';
-    }
-
-    return '继续记录交易日记，积累更多数据以获得更准确的分析。';
+    return {
+      maxDrawdown: Math.round(maxDrawdown * 100) / 100,
+      maxDrawdownRate: Math.round(maxDrawdownRate * 100) / 100,
+      drawdownStart,
+      drawdownEnd,
+    };
   }
 }

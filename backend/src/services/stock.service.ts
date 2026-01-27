@@ -20,6 +20,25 @@ export interface StockSearchResult {
   market: string;
 }
 
+export interface KLineData {
+  date: string;
+  open: number;
+  close: number;
+  high: number;
+  low: number;
+  volume: number;
+  amount: number;
+}
+
+export interface StockNews {
+  id: string;
+  title: string;
+  summary: string;
+  source: string;
+  time: string;
+  url: string;
+}
+
 export class StockService {
   /**
    * 获取股票实时行情（使用新浪API）
@@ -166,6 +185,85 @@ export class StockService {
       };
     } catch (error) {
       return null;
+    }
+  }
+
+  /**
+   * 获取K线数据
+   */
+  static async getKLineData(stockCode: string, period: string = 'daily'): Promise<KLineData[]> {
+    try {
+      const code = stockCode.replace(/\\.(SH|SZ|sh|sz)$/, '');
+      const market = stockCode.toUpperCase().includes('SH') || code.startsWith('6') ? '1' : '0';
+
+      // 使用东方财富K线API
+      const url = `https://push2his.eastmoney.com/api/qt/stock/kline/get`;
+      const response = await axios.get(url, {
+        params: {
+          secid: `${market}.${code}`,
+          fields1: 'f1,f2,f3,f4,f5,f6',
+          fields2: 'f51,f52,f53,f54,f55,f56,f57',
+          klt: period === 'weekly' ? 102 : period === 'monthly' ? 103 : 101,
+          fqt: 1,
+          end: '20500101',
+          lmt: 120,
+        },
+      });
+
+      const data = response.data;
+      if (data.data?.klines) {
+        return data.data.klines.map((line: string) => {
+          const parts = line.split(',');
+          return {
+            date: parts[0],
+            open: parseFloat(parts[1]),
+            close: parseFloat(parts[2]),
+            high: parseFloat(parts[3]),
+            low: parseFloat(parts[4]),
+            volume: parseFloat(parts[5]),
+            amount: parseFloat(parts[6]),
+          };
+        });
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch K-line data:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 获取股票相关新闻
+   */
+  static async getStockNews(stockCode?: string): Promise<StockNews[]> {
+    try {
+      // 使用东方财富快讯API
+      const url = `https://newsapi.eastmoney.com/kuaixun/v1/getlist_102_ajaxResult_30_1_.html`;
+      const response = await axios.get(url, {
+        headers: {
+          'Referer': 'https://finance.eastmoney.com',
+        },
+      });
+
+      // 响应格式是 var ajaxResult={...}
+      const text = response.data;
+      const jsonStr = text.replace(/^var ajaxResult=/, '').replace(/;?\s*$/, '');
+      const data = JSON.parse(jsonStr);
+
+      if (data.LivesList) {
+        return data.LivesList.map((item: any) => ({
+          id: item.id || item.newsid || String(Date.now()),
+          title: item.title || item.simtitle,
+          summary: item.digest || item.simdigest || item.title,
+          source: '东方财富',
+          time: item.showtime || item.ordertime,
+          url: item.url_w || item.url_m || `https://finance.eastmoney.com/a/${item.newsid}.html`,
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch stock news:', error);
+      return [];
     }
   }
 }

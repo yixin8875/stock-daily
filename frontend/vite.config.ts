@@ -40,6 +40,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // 允许更大的文件缓存
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
         // 缓存策略
         runtimeCaching: [
           {

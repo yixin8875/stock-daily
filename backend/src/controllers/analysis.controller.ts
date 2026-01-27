@@ -1,23 +1,71 @@
 import { Response, NextFunction } from 'express';
-import { AIAnalysisService } from '../services/analysis.service';
+import { AnalysisService } from '../services/analysis.service';
 import { AuthRequest, ApiError } from '../middlewares';
 
 export class AnalysisController {
   /**
-   * 获取AI分析结果
+   * 获取收益曲线
    */
-  static async getAnalysis(req: AuthRequest, res: Response, next: NextFunction) {
+  static async getProfitCurve(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      if (!req.userId) {
-        throw new ApiError(401, 'Unauthorized');
-      }
+      const { startDate, endDate } = req.query;
+      const curve = await AnalysisService.getProfitCurve(
+        req.userId!,
+        startDate as string,
+        endDate as string
+      );
 
-      const analysis = await AIAnalysisService.getAnalysis(req.userId);
+      // 计算最大回撤
+      const drawdown = AnalysisService.calculateMaxDrawdown(curve);
 
       res.json({
         success: true,
-        data: analysis,
+        data: {
+          curve,
+          drawdown,
+        },
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * 获取交易复盘
+   */
+  static async getTradeReviews(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { startDate, endDate } = req.query;
+      const reviews = await AnalysisService.getTradeReviews(
+        req.userId!,
+        startDate as string,
+        endDate as string
+      );
+
+      res.json({ success: true, data: reviews });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * 生成周报/月报
+   */
+  static async generateReport(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { periodType, date } = req.query;
+
+      if (!periodType || !['week', 'month'].includes(periodType as string)) {
+        throw new ApiError(400, 'Invalid period type');
+      }
+
+      const report = await AnalysisService.generateReport(
+        req.userId!,
+        periodType as 'week' | 'month',
+        date as string
+      );
+
+      res.json({ success: true, data: report });
     } catch (error) {
       next(error);
     }
