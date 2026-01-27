@@ -24,6 +24,8 @@ import {
   StockOutlined,
   FileTextOutlined,
   SyncOutlined,
+  ThunderboltOutlined,
+  BankOutlined,
 } from '@ant-design/icons'
 import { useAuthStore, useThemeStore } from '@/stores'
 
@@ -35,6 +37,11 @@ const menuItems = [
     key: '/',
     icon: <HomeOutlined />,
     label: '首页',
+  },
+  {
+    key: '/quotes',
+    icon: <StockOutlined />,
+    label: '股票行情',
   },
   {
     key: '/search',
@@ -84,6 +91,11 @@ const menuItems = [
     label: '交易复盘',
   },
   {
+    key: '/analysis',
+    icon: <ThunderboltOutlined />,
+    label: 'AI分析',
+  },
+  {
     key: 'settings',
     icon: <SettingOutlined />,
     label: '设置',
@@ -92,6 +104,11 @@ const menuItems = [
         key: '/settings/user',
         icon: <UserOutlined />,
         label: '用户设置',
+      },
+      {
+        key: '/settings/accounts',
+        icon: <BankOutlined />,
+        label: '账户管理',
       },
       {
         key: '/settings/tags',

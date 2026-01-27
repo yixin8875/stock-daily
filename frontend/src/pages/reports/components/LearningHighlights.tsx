@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, List, Tag, Space, Typography } from 'antd'
+import { Card, List, Space, Typography } from 'antd'
 import { BulbOutlined, WarningOutlined, CheckCircleOutlined, BookOutlined } from '@ant-design/icons'
 import type { LearningItem, ReflectionItem } from '@/types/report'
 import { useThemeStore } from '@/stores'

@@ -8,15 +8,6 @@ const router = Router();
 router.use(authMiddleware);
 
 /**
- * @route   GET /api/reports/:period
- * @desc    Get weekly or monthly report
- * @param   period - 'week' or 'month'
- * @query   date - Optional date (YYYY-MM-DD), defaults to current date
- * @access  Private
- */
-router.get('/:period', ReportController.getReport);
-
-/**
  * @route   GET /api/reports/:period/list
  * @desc    Get list of reports
  * @param   period - 'week' or 'month'
@@ -33,5 +24,14 @@ router.get('/:period/list', ReportController.getReportList);
  * @access  Private
  */
 router.get('/:period/export', ReportController.exportReport);
+
+/**
+ * @route   GET /api/reports/:period
+ * @desc    Get weekly or monthly report
+ * @param   period - 'week' or 'month'
+ * @query   date - Optional date (YYYY-MM-DD), defaults to current date
+ * @access  Private
+ */
+router.get('/:period', ReportController.getReport);
 
 export default router;

@@ -26,7 +26,11 @@
       "Bash(npx eslint:*)",
       "Bash(npm install vite-plugin-pwa -D)",
       "Bash(npm cache clean --force)",
-      "Bash(npm install exceljs)"
+      "Bash(npm install exceljs)",
+      "Bash(npm install axios)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(npm install echarts echarts-for-react react-grid-layout @types/react-grid-layout dayjs)",
+      "Bash(pnpm add echarts echarts-for-react react-grid-layout dayjs)"
     ]
   }
 }

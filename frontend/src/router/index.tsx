@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { MainLayout, ProtectedRoute } from '@/components'
-import { Home, Login, Register, DiaryList, TodaySummary, TomorrowPlan, HistoryPage, StatisticsPage, TagManagement, SearchPage, DataExport, UserSettings, ReportPage, ReviewPage } from '@/pages'
+import { Home, Login, Register, DiaryList, TodaySummary, TomorrowPlan, HistoryPage, StatisticsPage, TagManagement, SearchPage, DataExport, UserSettings, ReportPage, ReviewPage, AIAnalysisPage, AccountsPage, StockQuotesPage } from '@/pages'
 
 const router = createBrowserRouter([
   {
@@ -64,6 +64,18 @@ const router = createBrowserRouter([
           {
             path: '/search',
             element: <SearchPage />,
+          },
+          {
+            path: '/analysis',
+            element: <AIAnalysisPage />,
+          },
+          {
+            path: '/settings/accounts',
+            element: <AccountsPage />,
+          },
+          {
+            path: '/quotes',
+            element: <StockQuotesPage />,
           },
         ],
       },

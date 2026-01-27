@@ -23,7 +23,7 @@ export const exportService = {
     if (startDate) params.startDate = startDate
     if (endDate) params.endDate = endDate
 
-    const response = await request.get('/api/export/json', {
+    const response = await request.get('/export/json', {
       params,
       responseType: 'blob',
     })
@@ -38,7 +38,7 @@ export const exportService = {
     if (startDate) params.startDate = startDate
     if (endDate) params.endDate = endDate
 
-    const response = await request.get('/api/export/csv', {
+    const response = await request.get('/export/csv', {
       params,
       responseType: 'blob',
     })
@@ -49,7 +49,7 @@ export const exportService = {
    * 导出交易记录
    */
   exportTrades: async (params: TradeExportParams): Promise<Blob> => {
-    const response = await request.get('/api/export/trades', {
+    const response = await request.get('/export/trades', {
       params,
       responseType: 'blob',
     })

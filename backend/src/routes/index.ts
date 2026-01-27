@@ -11,6 +11,9 @@ import userRoutes from './user.routes';
 import reportRoutes from './report.routes';
 import reviewRoutes from './review.routes';
 import reminderRoutes from './reminder.routes';
+import stockRoutes from './stock.routes';
+import analysisRoutes from './analysis.routes';
+import accountRoutes from './account.routes';
 
 const router = Router();
 
@@ -27,5 +30,8 @@ router.use('/user', userRoutes);
 router.use('/reports', reportRoutes);
 router.use('/review', reviewRoutes);
 router.use('/reminders', reminderRoutes);
+router.use('/stocks', stockRoutes);
+router.use('/analysis', analysisRoutes);
+router.use('/accounts', accountRoutes);
 
 export default router;

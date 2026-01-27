@@ -141,7 +141,7 @@ export const useStatisticsStore = create<StatisticsState>()((set, get) => ({
     set({ winRateTrendLoading: true })
     try {
       const response = await statisticsService.getWinRateTrend(period)
-      set({ winRateTrend: response.data.data || [] })
+      set({ winRateTrend: response.data.data?.data || [] })
     } catch (error) {
       console.error('Failed to fetch win rate trend:', error)
       message.error('获取胜率趋势失败')
@@ -155,7 +155,7 @@ export const useStatisticsStore = create<StatisticsState>()((set, get) => ({
     set({ emotionProfitLoading: true })
     try {
       const response = await statisticsService.getEmotionProfitAnalysis(period)
-      set({ emotionProfit: response.data.data || [] })
+      set({ emotionProfit: response.data.data?.data || [] })
     } catch (error) {
       console.error('Failed to fetch emotion profit:', error)
       message.error('获取情绪分析失败')

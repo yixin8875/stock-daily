@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, Table, Tag, Space, Typography, theme } from 'antd'
+import { Card, Table, Tag, Space, Typography } from 'antd'
 import { RiseOutlined, FallOutlined, StockOutlined } from '@ant-design/icons'
 import type { StockPerformance } from '@/types/report'
 
@@ -12,8 +12,6 @@ interface StockRankingTableProps {
 const StockRankingTable: React.FC<StockRankingTableProps> = ({
   stockPerformance,
 }) => {
-  const { token } = theme.useToken()
-
   const topProfitable = stockPerformance.filter(s => s.profit > 0).slice(0, 5)
   const topLosing = stockPerformance.filter(s => s.profit < 0).slice(0, 5)
 

@@ -18,6 +18,28 @@ model User {
   updatedAt DateTime @updatedAt
   diaries   Diary[]
   tags      Tag[]
+  tradingAccounts TradingAccount[]
+}
+
+// 交易账户模型
+model TradingAccount {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String   // 账户名称，如"主账户"、"打新账户"
+  broker      String?  // 券商名称
+  accountNo   String?  // 账户号（可选，脱敏存储）
+  initialAssets Decimal? // 初始资金
+  currentAssets Decimal? // 当前资产
+  isDefault   Boolean  @default(false) // 是否默认账户
+  isActive    Boolean  @default(true)  // 是否启用
+  color       String   @default("#1890FF") // 账户颜色标识
+  notes       String?  // 备注
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, name])
 }
 
 model Diary {

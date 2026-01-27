@@ -60,11 +60,11 @@ export interface PendingPlans {
 export const reminderService = {
   // 获取今日提醒
   getTodayReminders: () => {
-    return request.get<TodayReminder>('/api/reminders/today')
+    return request.get<TodayReminder>('/reminders/today')
   },
 
   // 获取待执行计划
   getPendingPlans: () => {
-    return request.get<PendingPlans>('/api/reminders/pending')
+    return request.get<PendingPlans>('/reminders/pending')
   },
 }

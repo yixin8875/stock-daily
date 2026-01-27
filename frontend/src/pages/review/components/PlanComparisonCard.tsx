@@ -8,7 +8,6 @@ import {
   MinusCircleOutlined,
 } from '@ant-design/icons'
 import type { PlanExecutionPair } from '@/types/review'
-import { useThemeStore } from '@/stores'
 
 const { Text } = Typography
 
@@ -24,8 +23,6 @@ const STATUS_CONFIG = {
 }
 
 const PlanComparisonCard: React.FC<PlanComparisonCardProps> = ({ pairs }) => {
-  const { mode } = useThemeStore()
-
   const buyPairs = pairs.filter(p => p.planType === 'buy')
   const sellPairs = pairs.filter(p => p.planType === 'sell')
 
