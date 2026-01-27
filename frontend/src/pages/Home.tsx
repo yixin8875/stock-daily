@@ -9,6 +9,7 @@ import {
   RecentDiariesCard,
   TomorrowPlanCard,
 } from './home/components'
+import { TodayReminders } from '@/components'
 
 const { Title } = Typography
 
@@ -39,6 +40,9 @@ const Home: React.FC = () => {
 
         {/* 快捷入口 */}
         <QuickActionsCard />
+
+        {/* 今日提醒 */}
+        <TodayReminders />
 
         {/* 本周/本月统计 */}
         <PeriodStatsCard data={periodStats} loading={loading} />

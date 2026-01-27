@@ -25,4 +25,16 @@ router.get('/json', ExportController.exportJson);
  */
 router.get('/csv', ExportController.exportCsv);
 
+/**
+ * @route   GET /api/export/trades
+ * @desc    Export trades in various formats
+ * @query   exportType - 'detail' | 'summary' | 'analysis' (default: 'detail')
+ * @query   format - 'excel' | 'csv' | 'json' (default: 'excel')
+ * @query   startDate - Optional start date filter (YYYY-MM-DD)
+ * @query   endDate - Optional end date filter (YYYY-MM-DD)
+ * @query   stockCode - Optional stock code filter
+ * @access  Private
+ */
+router.get('/trades', ExportController.exportTrades);
+
 export default router;

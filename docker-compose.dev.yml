@@ -1,32 +1,79 @@
-# Docker Compose override for development environment
-# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# Docker Compose for Development Environment
+# Usage: docker compose -f docker-compose.dev.yml up
 
 version: '3.8'
 
 services:
+  # PostgreSQL Database
   postgres:
+    image: postgres:15-alpine
+    container_name: stock-daily-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-stockuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stockpass}
+      POSTGRES_DB: ${POSTGRES_DB:-stockdaily}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - stock-daily-network-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stockuser} -d ${POSTGRES_DB:-stockdaily}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
+  # Express Backend Service (Development)
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
+    container_name: stock-daily-backend-dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-stockuser}:${POSTGRES_PASSWORD:-stockpass}@postgres:5432/${POSTGRES_DB:-stockdaily}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: http://localhost:5173
     volumes:
       - ./backend/src:/app/src:ro
       - ./backend/prisma:/app/prisma
-    environment:
-      NODE_ENV: development
     ports:
       - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - stock-daily-network-dev
 
+  # React Frontend Service (Development with Vite)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    volumes:
-      - ./frontend/src:/app/src:ro
-    ports:
-      - "5173:5173"
+    container_name: stock-daily-frontend-dev
+    restart: unless-stopped
     environment:
       - VITE_API_URL=http://localhost:3000
+    volumes:
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - stock-daily-network-dev
+
+networks:
+  stock-daily-network-dev:
+    driver: bridge
+
+volumes:
+  postgres_data_dev:
+    driver: local

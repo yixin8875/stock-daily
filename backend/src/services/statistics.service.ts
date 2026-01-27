@@ -41,6 +41,24 @@ export interface TradeStatistics {
   };
 }
 
+export interface WinRateTrendPoint {
+  date: string;
+  winRate: number;
+  totalTrades: number;
+  winningTrades: number;
+}
+
+export interface EmotionProfitData {
+  emotion: string;
+  emotionLabel: string;
+  totalDays: number;
+  winningDays: number;
+  losingDays: number;
+  winRate: number;
+  avgProfit: number;
+  totalProfit: number;
+}
+
 export class StatisticsService {
   static async getSummary(
     userId: string,
@@ -384,5 +402,136 @@ export class StatisticsService {
       mostTradedStocks,
       profitDistribution,
     };
+  }
+
+  static async getWinRateTrend(
+    userId: string,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<WinRateTrendPoint[]> {
+    const whereClause: any = { userId };
+
+    if (startDate || endDate) {
+      whereClause.date = {};
+      if (startDate) {
+        whereClause.date.gte = startDate;
+      }
+      if (endDate) {
+        whereClause.date.lte = endDate;
+      }
+    }
+
+    const diaries = await prisma.diary.findMany({
+      where: whereClause,
+      select: {
+        date: true,
+        profitLossAmount: true,
+      },
+      orderBy: { date: 'asc' },
+    });
+
+    // Group by month and calculate win rate
+    const monthlyData = new Map<string, { wins: number; total: number }>();
+
+    for (const diary of diaries) {
+      if (diary.profitLossAmount !== null) {
+        const month = `${diary.date.getFullYear()}-${(diary.date.getMonth() + 1)
+          .toString()
+          .padStart(2, '0')}`;
+        const amount = Number(diary.profitLossAmount);
+
+        const existing = monthlyData.get(month);
+        if (existing) {
+          existing.total++;
+          if (amount > 0) existing.wins++;
+        } else {
+          monthlyData.set(month, {
+            wins: amount > 0 ? 1 : 0,
+            total: 1,
+          });
+        }
+      }
+    }
+
+    return Array.from(monthlyData.entries()).map(([date, data]) => ({
+      date,
+      winRate: Math.round((data.wins / data.total) * 100 * 100) / 100,
+      totalTrades: data.total,
+      winningTrades: data.wins,
+    }));
+  }
+
+  static async getEmotionProfitAnalysis(
+    userId: string,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<EmotionProfitData[]> {
+    const whereClause: any = { userId };
+
+    if (startDate || endDate) {
+      whereClause.date = {};
+      if (startDate) {
+        whereClause.date.gte = startDate;
+      }
+      if (endDate) {
+        whereClause.date.lte = endDate;
+      }
+    }
+
+    const diaries = await prisma.diary.findMany({
+      where: whereClause,
+      select: {
+        emotionBefore: true,
+        profitLossAmount: true,
+      },
+    });
+
+    const emotionLabels: Record<string, string> = {
+      EXCITED: '兴奋',
+      CALM: '平静',
+      ANXIOUS: '焦虑',
+      FEARFUL: '恐惧',
+      GREEDY: '贪婪',
+    };
+
+    const emotionData = new Map<string, {
+      totalDays: number;
+      winningDays: number;
+      losingDays: number;
+      totalProfit: number;
+    }>();
+
+    for (const diary of diaries) {
+      if (diary.emotionBefore && diary.profitLossAmount !== null) {
+        const emotion = diary.emotionBefore;
+        const profit = Number(diary.profitLossAmount);
+
+        const existing = emotionData.get(emotion);
+        if (existing) {
+          existing.totalDays++;
+          existing.totalProfit += profit;
+          if (profit > 0) existing.winningDays++;
+          else if (profit < 0) existing.losingDays++;
+        } else {
+          emotionData.set(emotion, {
+            totalDays: 1,
+            winningDays: profit > 0 ? 1 : 0,
+            losingDays: profit < 0 ? 1 : 0,
+            totalProfit: profit,
+          });
+        }
+      }
+    }
+
+    return Array.from(emotionData.entries()).map(([emotion, data]) => ({
+      emotion,
+      emotionLabel: emotionLabels[emotion] || emotion,
+      totalDays: data.totalDays,
+      winningDays: data.winningDays,
+      losingDays: data.losingDays,
+      winRate: Math.round((data.winningDays / data.totalDays) * 100 * 100) / 100,
+      avgProfit: Math.round((data.totalProfit / data.totalDays) * 100) / 100,
+      totalProfit: Math.round(data.totalProfit * 100) / 100,
+    }));
   }
 }

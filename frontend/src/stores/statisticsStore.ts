@@ -8,6 +8,8 @@ import type {
   ProfitCurvePoint,
   TradeDistribution,
   MonthlyProfit,
+  WinRateTrendPoint,
+  EmotionProfitData,
 } from '@/types/statistics'
 
 interface StatisticsState {
@@ -30,12 +32,20 @@ interface StatisticsState {
   // 月度收益
   monthlyProfit: MonthlyProfit[]
   monthlyProfitLoading: boolean
+  // 胜率趋势
+  winRateTrend: WinRateTrendPoint[]
+  winRateTrendLoading: boolean
+  // 情绪分析
+  emotionProfit: EmotionProfitData[]
+  emotionProfitLoading: boolean
   // Actions
   setPeriod: (period: StatisticsPeriod) => void
   fetchSummary: () => Promise<void>
   fetchProfitCurve: () => Promise<void>
   fetchTradeDistribution: () => Promise<void>
   fetchMonthlyProfit: () => Promise<void>
+  fetchWinRateTrend: () => Promise<void>
+  fetchEmotionProfit: () => Promise<void>
   fetchAllData: () => Promise<void>
 }
 
@@ -50,6 +60,10 @@ export const useStatisticsStore = create<StatisticsState>()((set, get) => ({
   tradeDistributionLoading: false,
   monthlyProfit: [],
   monthlyProfitLoading: false,
+  winRateTrend: [],
+  winRateTrendLoading: false,
+  emotionProfit: [],
+  emotionProfitLoading: false,
 
   setPeriod: (period) => {
     set({ period })
@@ -122,13 +136,43 @@ export const useStatisticsStore = create<StatisticsState>()((set, get) => ({
     }
   },
 
+  fetchWinRateTrend: async () => {
+    const { period } = get()
+    set({ winRateTrendLoading: true })
+    try {
+      const response = await statisticsService.getWinRateTrend(period)
+      set({ winRateTrend: response.data.data || [] })
+    } catch (error) {
+      console.error('Failed to fetch win rate trend:', error)
+      message.error('获取胜率趋势失败')
+    } finally {
+      set({ winRateTrendLoading: false })
+    }
+  },
+
+  fetchEmotionProfit: async () => {
+    const { period } = get()
+    set({ emotionProfitLoading: true })
+    try {
+      const response = await statisticsService.getEmotionProfitAnalysis(period)
+      set({ emotionProfit: response.data.data || [] })
+    } catch (error) {
+      console.error('Failed to fetch emotion profit:', error)
+      message.error('获取情绪分析失败')
+    } finally {
+      set({ emotionProfitLoading: false })
+    }
+  },
+
   fetchAllData: async () => {
-    const { fetchSummary, fetchProfitCurve, fetchTradeDistribution, fetchMonthlyProfit } = get()
+    const { fetchSummary, fetchProfitCurve, fetchTradeDistribution, fetchMonthlyProfit, fetchWinRateTrend, fetchEmotionProfit } = get()
     await Promise.all([
       fetchSummary(),
       fetchProfitCurve(),
       fetchTradeDistribution(),
       fetchMonthlyProfit(),
+      fetchWinRateTrend(),
+      fetchEmotionProfit(),
     ])
   },
 }))

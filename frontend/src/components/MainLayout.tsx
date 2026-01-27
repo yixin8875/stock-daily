@@ -22,6 +22,8 @@ import {
   MoonOutlined,
   MenuOutlined,
   StockOutlined,
+  FileTextOutlined,
+  SyncOutlined,
 } from '@ant-design/icons'
 import { useAuthStore, useThemeStore } from '@/stores'
 
@@ -70,6 +72,16 @@ const menuItems = [
     key: '/statistics',
     icon: <BarChartOutlined />,
     label: '统计分析',
+  },
+  {
+    key: '/reports',
+    icon: <FileTextOutlined />,
+    label: '交易报告',
+  },
+  {
+    key: '/review',
+    icon: <SyncOutlined />,
+    label: '交易复盘',
   },
   {
     key: 'settings',

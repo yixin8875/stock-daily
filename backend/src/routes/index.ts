@@ -8,6 +8,9 @@ import tagRoutes from './tag.routes';
 import searchRoutes from './search.routes';
 import exportRoutes from './export.routes';
 import userRoutes from './user.routes';
+import reportRoutes from './report.routes';
+import reviewRoutes from './review.routes';
+import reminderRoutes from './reminder.routes';
 
 const router = Router();
 
@@ -21,5 +24,8 @@ router.use('/tags', tagRoutes);
 router.use('/search', searchRoutes);
 router.use('/export', exportRoutes);
 router.use('/user', userRoutes);
+router.use('/reports', reportRoutes);
+router.use('/review', reviewRoutes);
+router.use('/reminders', reminderRoutes);
 
 export default router;

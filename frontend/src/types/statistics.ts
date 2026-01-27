@@ -74,3 +74,33 @@ export interface TradeDistributionResponse {
 export interface MonthlyProfitResponse {
   data: MonthlyProfit[]
 }
+
+// 胜率趋势数据点
+export interface WinRateTrendPoint {
+  date: string
+  winRate: number
+  totalTrades: number
+  winningTrades: number
+}
+
+// 胜率趋势响应
+export interface WinRateTrendResponse {
+  data: WinRateTrendPoint[]
+}
+
+// 情绪与收益分析数据
+export interface EmotionProfitData {
+  emotion: string
+  emotionLabel: string
+  totalDays: number
+  winningDays: number
+  losingDays: number
+  winRate: number
+  avgProfit: number
+  totalProfit: number
+}
+
+// 情绪与收益分析响应
+export interface EmotionProfitResponse {
+  data: EmotionProfitData[]
+}

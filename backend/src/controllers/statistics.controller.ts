@@ -134,4 +134,52 @@ export class StatisticsController {
       next(error);
     }
   }
+
+  static async getWinRateTrend(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      if (!req.userId) {
+        throw new ApiError(401, 'Unauthorized');
+      }
+
+      const period = req.query.period as string | undefined;
+      const { startDate, endDate } = getDateRangeByPeriod(period);
+
+      const winRateTrend = await StatisticsService.getWinRateTrend(
+        req.userId,
+        startDate,
+        endDate
+      );
+
+      res.json({
+        success: true,
+        data: winRateTrend,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getEmotionProfitAnalysis(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      if (!req.userId) {
+        throw new ApiError(401, 'Unauthorized');
+      }
+
+      const period = req.query.period as string | undefined;
+      const { startDate, endDate } = getDateRangeByPeriod(period);
+
+      const emotionAnalysis = await StatisticsService.getEmotionProfitAnalysis(
+        req.userId,
+        startDate,
+        endDate
+      );
+
+      res.json({
+        success: true,
+        data: emotionAnalysis,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

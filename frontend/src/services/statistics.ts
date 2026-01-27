@@ -6,6 +6,8 @@ import type {
   ProfitCurveResponse,
   TradeDistributionResponse,
   MonthlyProfitResponse,
+  WinRateTrendResponse,
+  EmotionProfitResponse,
 } from '@/types/statistics'
 
 export const statisticsService = {
@@ -33,6 +35,20 @@ export const statisticsService = {
   // 获取月度收益数据
   getMonthlyProfit: (period: StatisticsPeriod) => {
     return request.get<ApiResponse<MonthlyProfitResponse>>('/statistics/monthly', {
+      params: { period },
+    })
+  },
+
+  // 获取胜率趋势数据
+  getWinRateTrend: (period: StatisticsPeriod) => {
+    return request.get<ApiResponse<WinRateTrendResponse>>('/statistics/win-rate-trend', {
+      params: { period },
+    })
+  },
+
+  // 获取情绪与收益分析数据
+  getEmotionProfitAnalysis: (period: StatisticsPeriod) => {
+    return request.get<ApiResponse<EmotionProfitResponse>>('/statistics/emotion-analysis', {
       params: { period },
     })
   },

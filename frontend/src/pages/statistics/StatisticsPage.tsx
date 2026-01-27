@@ -10,6 +10,8 @@ import {
   MonthlyProfitChart,
   TradeStatsTable,
   StockTradesSummary,
+  WinRateTrendChart,
+  EmotionProfitChart,
 } from './components'
 
 const { Title } = Typography
@@ -34,6 +36,10 @@ const StatisticsPage: React.FC = () => {
     tradeDistributionLoading,
     monthlyProfit,
     monthlyProfitLoading,
+    winRateTrend,
+    winRateTrendLoading,
+    emotionProfit,
+    emotionProfitLoading,
     fetchAllData,
   } = useStatisticsStore()
 
@@ -72,6 +78,16 @@ const StatisticsPage: React.FC = () => {
 
         {/* 月度收益柱状图 */}
         <MonthlyProfitChart data={monthlyProfit} loading={monthlyProfitLoading} />
+
+        {/* 胜率趋势和情绪分析 */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={12}>
+            <WinRateTrendChart data={winRateTrend} loading={winRateTrendLoading} />
+          </Col>
+          <Col xs={24} lg={12}>
+            <EmotionProfitChart data={emotionProfit} loading={emotionProfitLoading} />
+          </Col>
+        </Row>
 
         {/* 交易分布图和交易统计表格 */}
         <Row gutter={[16, 16]}>

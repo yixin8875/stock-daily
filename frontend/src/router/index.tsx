@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { MainLayout, ProtectedRoute } from '@/components'
-import { Home, Login, Register, DiaryList, TodaySummary, TomorrowPlan, HistoryPage, StatisticsPage, TagManagement, SearchPage, DataExport, UserSettings } from '@/pages'
+import { Home, Login, Register, DiaryList, TodaySummary, TomorrowPlan, HistoryPage, StatisticsPage, TagManagement, SearchPage, DataExport, UserSettings, ReportPage, ReviewPage } from '@/pages'
 
 const router = createBrowserRouter([
   {
@@ -40,6 +40,14 @@ const router = createBrowserRouter([
           {
             path: '/statistics',
             element: <StatisticsPage />,
+          },
+          {
+            path: '/reports',
+            element: <ReportPage />,
+          },
+          {
+            path: '/review',
+            element: <ReviewPage />,
           },
           {
             path: '/settings/tags',

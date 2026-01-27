@@ -5,6 +5,15 @@ export interface ExportParams {
   endDate?: string
 }
 
+export type TradeExportType = 'detail' | 'summary' | 'analysis'
+export type ExportFormat = 'excel' | 'csv' | 'json'
+
+export interface TradeExportParams extends ExportParams {
+  exportType: TradeExportType
+  format: ExportFormat
+  stockCode?: string
+}
+
 export const exportService = {
   /**
    * 导出日记为JSON格式
@@ -30,6 +39,17 @@ export const exportService = {
     if (endDate) params.endDate = endDate
 
     const response = await request.get('/api/export/csv', {
+      params,
+      responseType: 'blob',
+    })
+    return response.data
+  },
+
+  /**
+   * 导出交易记录
+   */
+  exportTrades: async (params: TradeExportParams): Promise<Blob> => {
+    const response = await request.get('/api/export/trades', {
       params,
       responseType: 'blob',
     })

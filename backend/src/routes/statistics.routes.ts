@@ -19,4 +19,10 @@ router.get('/trades', StatisticsController.getTradeStatistics);
 // Get monthly profit data
 router.get('/monthly', StatisticsController.getMonthlyProfit);
 
+// Get win rate trend data
+router.get('/win-rate-trend', StatisticsController.getWinRateTrend);
+
+// Get emotion vs profit analysis
+router.get('/emotion-analysis', StatisticsController.getEmotionProfitAnalysis);
+
 export default router;
