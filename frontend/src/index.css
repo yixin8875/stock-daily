@@ -1,3 +1,5 @@
+/* Stock Daily - Professional Finance Theme */
+
 * {
   margin: 0;
   padding: 0;
@@ -12,29 +14,255 @@ body,
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-    'Noto Color Emoji';
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'tnum';
+}
+
+/* CSS Variables for Finance Theme */
+:root {
+  /* Primary Colors */
+  --color-primary: #3B82F6;
+  --color-primary-hover: #2563EB;
+  --color-primary-light: #DBEAFE;
+
+  /* Semantic Colors */
+  --color-profit: #10B981;
+  --color-profit-bg: #D1FAE5;
+  --color-loss: #EF4444;
+  --color-loss-bg: #FEE2E2;
+  --color-warning: #F59E0B;
+  --color-warning-bg: #FEF3C7;
+
+  /* Neutral Colors */
+  --color-bg-primary: #F8FAFC;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-tertiary: #F1F5F9;
+  --color-border: #E2E8F0;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #3B82F6 0%, #6366F1 100%);
+  --gradient-profit: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --gradient-loss: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  --gradient-card: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Mode Variables */
+[data-theme='dark'] {
+  --color-primary: #60A5FA;
+  --color-primary-hover: #3B82F6;
+  --color-primary-light: #1E3A5F;
+
+  --color-profit: #34D399;
+  --color-profit-bg: #064E3B;
+  --color-loss: #F87171;
+  --color-loss-bg: #7F1D1D;
+  --color-warning: #FBBF24;
+  --color-warning-bg: #78350F;
+
+  --color-bg-primary: #0F172A;
+  --color-bg-secondary: #1E293B;
+  --color-bg-tertiary: #334155;
+  --color-border: #334155;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+
+  --gradient-card: linear-gradient(180deg, rgba(30,41,59,0.8) 0%, rgba(30,41,59,0.4) 100%);
 }
 
 /* Search highlight styles */
 mark {
-  background-color: #ffe58f;
-  padding: 0 2px;
-  border-radius: 2px;
+  background: linear-gradient(120deg, #FBBF24 0%, #F59E0B 100%);
+  padding: 0 4px;
+  border-radius: 4px;
+  color: #0F172A;
 }
 
-/* 移动端响应式样式 */
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* Ant Design Overrides - Professional Finance Style */
+
+/* Card Enhancements */
+.ant-card {
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-normal);
+}
+
+.ant-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.ant-card-head {
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+}
+
+/* Statistic Enhancements */
+.ant-statistic-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.ant-statistic-content {
+  font-weight: 700;
+  font-feature-settings: 'tnum';
+}
+
+/* Profit/Loss Colors */
+.profit-text {
+  color: var(--color-profit) !important;
+}
+
+.loss-text {
+  color: var(--color-loss) !important;
+}
+
+.profit-bg {
+  background: var(--color-profit-bg) !important;
+}
+
+.loss-bg {
+  background: var(--color-loss-bg) !important;
+}
+
+/* Button Enhancements */
+.ant-btn-primary {
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.ant-btn-primary:hover {
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Table Enhancements */
+.ant-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ant-table-thead > tr > th {
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ant-table-tbody > tr {
+  transition: background var(--transition-fast);
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: var(--color-bg-tertiary) !important;
+}
+
+/* Tag Enhancements */
+.ant-tag {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 2px 10px;
+}
+
+/* Menu Enhancements */
+.ant-menu-item {
+  margin: 4px 8px !important;
+  border-radius: 8px !important;
+}
+
+.ant-menu-item-selected {
+  font-weight: 600;
+}
+
+/* Input Enhancements */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker {
+  border-radius: 8px !important;
+}
+
+.ant-input:focus,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+/* Modal Enhancements */
+.ant-modal-content {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ant-modal-header {
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Drawer Enhancements */
+.ant-drawer-content {
+  border-radius: 0;
+}
+
+/* Divider */
+.ant-divider-horizontal.ant-divider-with-text {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+/* Empty State */
+.ant-empty-description {
+  color: var(--color-text-muted);
+}
+
+/* Spin */
+.ant-spin-dot-item {
+  background-color: var(--color-primary);
+}
+
+/* Mobile Responsive Styles */
 @media screen and (max-width: 768px) {
-  /* 调整 Ant Design 组件在移动端的样式 */
   .ant-card-body {
-    padding: 12px !important;
+    padding: 16px !important;
   }
 
   .ant-table-wrapper .ant-table {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .ant-statistic-title {
@@ -42,51 +270,89 @@ mark {
   }
 
   .ant-statistic-content {
-    font-size: 18px;
+    font-size: 20px !important;
   }
 
-  /* 表单在移动端的样式 */
   .ant-form-item-label {
     padding-bottom: 4px;
   }
 
-  /* 日期选择器在移动端的样式 */
   .ant-picker-range {
     width: 100%;
   }
 
-  /* 模态框在移动端的样式 */
   .ant-modal {
     max-width: calc(100vw - 32px);
     margin: 16px auto;
   }
 
-  /* 抽屉在移动端的样式 */
   .ant-drawer-content-wrapper {
-    max-width: 80vw;
+    max-width: 85vw;
   }
 }
 
-/* 平板端响应式样式 */
+/* Tablet Responsive Styles */
 @media screen and (min-width: 769px) and (max-width: 1024px) {
   .ant-card-body {
-    padding: 16px !important;
+    padding: 20px !important;
   }
 }
 
-/* 触摸设备优化 */
+/* Touch Device Optimizations */
 @media (hover: none) and (pointer: coarse) {
-  /* 增大可点击区域 */
   .ant-btn {
-    min-height: 36px;
+    min-height: 44px;
   }
 
   .ant-btn-sm {
-    min-height: 28px;
+    min-height: 36px;
   }
 
-  /* 列表项增大间距 */
   .ant-list-item {
     padding: 12px 16px;
+  }
+
+  .ant-menu-item {
+    min-height: 44px;
+    line-height: 44px;
+  }
+}
+
+/* Animation Classes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

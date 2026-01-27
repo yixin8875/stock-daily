@@ -176,7 +176,7 @@ const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
           </>
         )}
 
-        <Divider orientation="left">交易历史</Divider>
+        <Divider>交易历史</Divider>
 
         {trades.length > 0 ? (
           <Table

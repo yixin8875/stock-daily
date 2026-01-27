@@ -1,5 +1,4 @@
 import request from '@/utils/request'
-import type { ApiResponse } from '@/types'
 
 // 交易记录类型
 export interface Trade {
@@ -73,15 +72,21 @@ export interface TradeStatisticsResponse {
   totalStats: TotalStats
 }
 
+// 带 success 字段的响应类型
+interface SuccessResponse<T> {
+  success: boolean
+  data?: T
+}
+
 export const tradeService = {
   // 获取单只股票的交易历史
   getStockHistory: (stockCode: string) => {
-    return request.get<ApiResponse<StockHistoryResponse>>(`/trades/stock/${stockCode}/history`)
+    return request.get<SuccessResponse<never> & StockHistoryResponse>(`/trades/stock/${stockCode}/history`)
   },
 
   // 获取交易统计概览
   getStatistics: (params?: { startDate?: string; endDate?: string }) => {
-    return request.get<ApiResponse<TradeStatisticsResponse>>('/trades/statistics', { params })
+    return request.get<SuccessResponse<never> & TradeStatisticsResponse>('/trades/statistics', { params })
   },
 
   // 获取交易列表
@@ -92,11 +97,11 @@ export const tradeService = {
     startDate?: string
     endDate?: string
   }) => {
-    return request.get<ApiResponse<{ data: Trade[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>>('/trades', { params })
+    return request.get<SuccessResponse<never> & { data: Trade[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>('/trades', { params })
   },
 
   // 获取单个交易详情
   getTradeById: (id: string) => {
-    return request.get<ApiResponse<Trade>>(`/trades/${id}`)
+    return request.get<SuccessResponse<never> & { data: Trade }>(`/trades/${id}`)
   },
 }
