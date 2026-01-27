@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import dayjs, { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { message } from 'antd'
 import { diaryService } from '@/services/diary'
 import type { TodaySummary, TomorrowPlan, CalendarDayData } from '@/types/diary'
@@ -102,7 +102,7 @@ export const useHistoryStore = create<HistoryState>()(
           if (dateRange[1]) params.endDate = dateRange[1]
           const response = await diaryService.getDiaryList(params)
           const data = response.data.data
-          set({ listData: data?.list || [], listTotal: data?.total || 0 })
+          set({ listData: data?.data || [], listTotal: data?.pagination?.total || 0 })
         } catch (error) {
           console.error('Failed to fetch list data:', error)
           message.error('获取列表数据失败')
@@ -116,7 +116,16 @@ export const useHistoryStore = create<HistoryState>()(
         try {
           const response = await diaryService.getDiaryDetail(date)
           const data = response.data.data
-          set({ detailSummary: data?.summary || null, detailPlan: data?.plan || null })
+          // Convert plan to TomorrowPlan format if it exists
+          const plan: TomorrowPlan | null = data?.plan ? {
+            date: date,
+            watchStocks: data.plan.watchStocks || [],
+            buyPlans: data.plan.buyPlans || [],
+            sellPlans: data.plan.sellPlans || [],
+            stopLosses: data.plan.stopLosses || [],
+            riskAlert: { riskTypes: [], description: '', countermeasures: '' },
+          } : null
+          set({ detailSummary: data?.summary || null, detailPlan: plan })
         } catch (error) {
           console.error('Failed to fetch diary detail:', error)
           message.error('获取日记详情失败')

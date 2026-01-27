@@ -39,7 +39,7 @@ const DiaryDetailModal: React.FC<DiaryDetailModalProps> = ({ open, onClose, summ
     if (!summary) return null
     return (
       <>
-        <Divider orientation="left">今日总结</Divider>
+        <Divider>今日总结</Divider>
         <Descriptions title="大盘点评" column={2} bordered size="small">
           <Descriptions.Item label="大盘走势">
             {summary.marketComment.trend ? <Tag color={TREND_MAP[summary.marketComment.trend].color}>{TREND_MAP[summary.marketComment.trend].label}</Tag> : '-'}
@@ -102,7 +102,7 @@ const DiaryDetailModal: React.FC<DiaryDetailModalProps> = ({ open, onClose, summ
     if (!plan) return null
     return (
       <>
-        <Divider orientation="left">明日计划</Divider>
+        <Divider>明日计划</Divider>
         {plan.watchStocks.length > 0 && (
           <div style={{ marginBottom: 16 }}>
             <Text strong>关注股票 ({plan.watchStocks.length}只)</Text>

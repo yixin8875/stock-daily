@@ -24,7 +24,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons'
 import { useTagStore } from '@/stores/tagStore'
-import type { Tag as TagType, TagCategory } from '@/types/tag'
+import type { Tag as TagType, TagCategory, CreateTagParams, UpdateTagParams } from '@/types/tag'
 import { TAG_CATEGORIES, TAG_CATEGORY_LABELS, PRESET_COLORS } from '@/types/tag'
 
 const { Title } = Typography

@@ -224,3 +224,52 @@ export interface DiaryDetail {
   } | null
 }
 
+// 后端返回的日记数据格式（扁平结构）
+export interface DiaryBackendResponse {
+  id: number | string
+  date: string | Date
+  marketTrend?: MarketTrend | null
+  marketVolume?: VolumeType | null
+  marketComment?: string | null
+  hotSectors?: string[] | null
+  trades?: TradeRecord[] | null
+  profitLossAmount?: number | string | null
+  profitLossPercent?: number | string | null
+  totalAssets?: number | string | null
+  reflectionGood?: string | null
+  reflectionBad?: string | null
+  reflectionImprove?: string | null
+  reflectionTags?: string[] | null
+  emotionBefore?: EmotionLevel | null
+  emotionDuring?: EmotionLevel | null
+  emotionAfter?: EmotionLevel | null
+  emotionNote?: string | null
+  learningNote?: string | null
+  learningCategory?: string | null
+  createdAt?: string
+  updatedAt?: string
+}
+
+// 保存日记的后端参数格式
+export interface SaveDiaryBackendParams {
+  id?: string
+  date: string
+  marketTrend?: MarketTrend | null
+  marketVolume?: VolumeType | null
+  marketComment?: string
+  hotSectors?: string[]
+  profitLossAmount?: number | null
+  profitLossPercent?: number | null
+  totalAssets?: number | null
+  reflectionGood?: string
+  reflectionBad?: string
+  reflectionImprove?: string
+  reflectionTags?: string[]
+  emotionBefore?: EmotionLevel | null
+  emotionDuring?: EmotionLevel | null
+  emotionAfter?: EmotionLevel | null
+  emotionNote?: string
+  learningNote?: string
+  learningCategory?: string
+}
+

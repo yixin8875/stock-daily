@@ -214,11 +214,11 @@ export const useDiaryStore = create<DiaryState>()((set, get) => ({
       if (diary) {
         // 后端返回的是数据库模型格式，需要转换为前端格式
         const summary: TodaySummary = {
-          id: diary.id as unknown as number,
+          id: typeof diary.id === 'string' ? parseInt(diary.id, 10) : diary.id,
           date: typeof diary.date === 'string' ? diary.date : new Date(diary.date).toISOString().split('T')[0],
           marketComment: {
-            trend: diary.marketTrend as MarketComment['trend'],
-            volume: diary.marketVolume as MarketComment['volume'],
+            trend: diary.marketTrend ?? null,
+            volume: diary.marketVolume ?? null,
             hotSectors: diary.hotSectors || [],
             comment: diary.marketComment || '',
           },
@@ -235,9 +235,9 @@ export const useDiaryStore = create<DiaryState>()((set, get) => ({
             tags: diary.reflectionTags || [],
           },
           emotion: {
-            beforeOpen: diary.emotionBefore as EmotionRecord['beforeOpen'],
-            duringTrading: diary.emotionDuring as EmotionRecord['duringTrading'],
-            afterClose: diary.emotionAfter as EmotionRecord['afterClose'],
+            beforeOpen: diary.emotionBefore ?? null,
+            duringTrading: diary.emotionDuring ?? null,
+            afterClose: diary.emotionAfter ?? null,
             note: diary.emotionNote || '',
           },
           learningNote: {
@@ -249,7 +249,7 @@ export const useDiaryStore = create<DiaryState>()((set, get) => ({
         }
         set({
           currentSummary: summary,
-          currentDiaryId: diary.id as string,
+          currentDiaryId: String(diary.id),
           marketComment: summary.marketComment,
           tradeRecords: summary.tradeRecords,
           profitLoss: summary.profitLoss,
@@ -301,7 +301,7 @@ export const useDiaryStore = create<DiaryState>()((set, get) => ({
       const response = await diaryService.saveTodaySummary(params)
       // 更新 currentDiaryId
       if (response.data.data?.id) {
-        set({ currentDiaryId: response.data.data.id as string })
+        set({ currentDiaryId: String(response.data.data.id) })
       }
       message.success('保存成功')
       return true
@@ -481,7 +481,7 @@ export const useDiaryStore = create<DiaryState>()((set, get) => ({
         const createResponse = await diaryService.saveTodaySummary({
           date: state.selectedDate,
         })
-        diaryId = createResponse.data.data?.id as string
+        diaryId = createResponse.data.data?.id ? String(createResponse.data.data.id) : null
         if (!diaryId) {
           throw new Error('Failed to create diary')
         }

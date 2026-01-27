@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Alert } from 'antd'
-import { WifiOutlined, DisconnectOutlined } from '@ant-design/icons'
+import { DisconnectOutlined } from '@ant-design/icons'
 
 const OfflineIndicator: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine)

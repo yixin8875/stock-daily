@@ -1,19 +1,19 @@
 import request from '@/utils/request'
 import type { ApiResponse } from '@/types'
-import type { TodaySummary, SaveTodaySummaryParams, TomorrowPlan, SaveTomorrowPlanParams, CalendarMonthData, DiaryDetail } from '@/types/diary'
+import type { TodaySummary, SaveTomorrowPlanParams, CalendarMonthData, DiaryDetail, DiaryBackendResponse, SaveDiaryBackendParams } from '@/types/diary'
 
 export const diaryService = {
   // 获取指定日期的今日总结
   getTodaySummary: (date: string) => {
-    return request.get<ApiResponse<TodaySummary | null>>(`/diaries/${date}`)
+    return request.get<ApiResponse<DiaryBackendResponse | null>>(`/diaries/${date}`)
   },
 
   // 保存今日总结（创建或更新）
-  saveTodaySummary: (params: SaveTodaySummaryParams & { id?: string }) => {
+  saveTodaySummary: (params: SaveDiaryBackendParams) => {
     if (params.id) {
-      return request.put<ApiResponse<TodaySummary>>(`/diaries/${params.id}`, params)
+      return request.put<ApiResponse<DiaryBackendResponse>>(`/diaries/${params.id}`, params)
     }
-    return request.post<ApiResponse<TodaySummary>>('/diaries', params)
+    return request.post<ApiResponse<DiaryBackendResponse>>('/diaries', params)
   },
 
   // 获取日记列表

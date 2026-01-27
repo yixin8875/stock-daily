@@ -1,7 +1,6 @@
 import React from 'react'
 import { Calendar, Badge, Typography } from 'antd'
 import type { Dayjs } from 'dayjs'
-import dayjs from 'dayjs'
 import type { CalendarDayData } from '@/types/diary'
 
 const { Text } = Typography
@@ -27,7 +26,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
     const profit = data.todayProfit
     const isProfit = profit !== null && profit >= 0
-    const isLoss = profit !== null && profit < 0
 
     return (
       <div
