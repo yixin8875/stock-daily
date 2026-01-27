@@ -1,9 +1,12 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import {
   Card, Table, Button, Space, Typography, Tag, message, Modal, Form, Input,
-  InputNumber, Popconfirm, Empty, Spin
+  InputNumber, Popconfirm, Empty, Spin, Row, Col, Statistic, Tooltip, Select
 } from 'antd'
-import { PlusOutlined, DeleteOutlined, EditOutlined, ReloadOutlined } from '@ant-design/icons'
+import {
+  PlusOutlined, DeleteOutlined, EditOutlined, ReloadOutlined,
+  ArrowUpOutlined, ArrowDownOutlined, StarFilled, FilterOutlined
+} from '@ant-design/icons'
 import { watchlistService, stockService, type WatchlistStock, type StockQuote } from '@/services'
 
 const { Title, Text } = Typography
@@ -15,6 +18,7 @@ const WatchlistPage: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false)
   const [editingStock, setEditingStock] = useState<WatchlistStock | null>(null)
   const [form] = Form.useForm()
+  const [filterIndustry, setFilterIndustry] = useState<string | null>(null)
 
   const fetchStocks = async () => {
     setLoading(true)
@@ -87,10 +91,38 @@ const WatchlistPage: React.FC = () => {
     }
   }
 
+  // 计算统计数据
+  const stats = useMemo(() => {
+    let upCount = 0, downCount = 0, flatCount = 0
+    stocks.forEach(s => {
+      const quote = quotes[s.stockCode]
+      if (quote) {
+        if (quote.change > 0) upCount++
+        else if (quote.change < 0) downCount++
+        else flatCount++
+      }
+    })
+    return { upCount, downCount, flatCount, total: stocks.length }
+  }, [stocks, quotes])
+
+  // 获取所有行业
+  const industries = useMemo(() => {
+    const set = new Set<string>()
+    stocks.forEach(s => { if (s.industry) set.add(s.industry) })
+    return Array.from(set)
+  }, [stocks])
+
+  // 筛选后的数据
+  const filteredStocks = useMemo(() => {
+    if (!filterIndustry) return stocks
+    return stocks.filter(s => s.industry === filterIndustry)
+  }, [stocks, filterIndustry])
+
   const columns = [
     {
       title: '股票',
       key: 'stock',
+      width: 140,
       render: (_: unknown, record: WatchlistStock) => (
         <Space direction="vertical" size={0}>
           <Text strong>{record.stockName}</Text>
@@ -99,20 +131,28 @@ const WatchlistPage: React.FC = () => {
       ),
     },
     {
+      title: '行业',
+      dataIndex: 'industry',
+      key: 'industry',
+      width: 90,
+      render: (v: string | null) => v ? <Tag>{v}</Tag> : <Text type="secondary">--</Text>,
+    },
+    {
       title: '现价',
       key: 'price',
+      width: 120,
       render: (_: unknown, record: WatchlistStock) => {
         const quote = quotes[record.stockCode]
         if (!quote) return <Text type="secondary">--</Text>
         const change = quote.change || 0
+        const color = change >= 0 ? '#cf1322' : '#3f8600'
         return (
           <Space direction="vertical" size={0}>
-            <Text style={{ color: change >= 0 ? '#EF4444' : '#10B981' }}>
-              ¥{quote.price.toFixed(2)}
-            </Text>
-            <Tag color={change >= 0 ? 'red' : 'green'}>
+            <Text strong style={{ color }}>¥{quote.price.toFixed(2)}</Text>
+            <Text style={{ color, fontSize: 12 }}>
+              {change >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
               {change >= 0 ? '+' : ''}{change.toFixed(2)}%
-            </Tag>
+            </Text>
           </Space>
         )
       },
@@ -121,38 +161,58 @@ const WatchlistPage: React.FC = () => {
       title: '添加价',
       dataIndex: 'addPrice',
       key: 'addPrice',
+      width: 90,
       render: (v: number | null) => v ? `¥${v.toFixed(2)}` : '--',
     },
     {
-      title: '涨跌幅(自添加)',
+      title: '涨跌(自添加)',
       key: 'changeFromAdd',
+      width: 110,
       render: (_: unknown, record: WatchlistStock) => {
         const quote = quotes[record.stockCode]
         if (!quote || !record.addPrice) return <Text type="secondary">--</Text>
         const change = ((quote.price - record.addPrice) / record.addPrice) * 100
+        const color = change >= 0 ? '#cf1322' : '#3f8600'
         return (
-          <Text style={{ color: change >= 0 ? '#EF4444' : '#10B981' }}>
+          <Text style={{ color }}>
             {change >= 0 ? '+' : ''}{change.toFixed(2)}%
           </Text>
         )
       },
     },
     {
-      title: '目标/止损',
-      key: 'targets',
-      render: (_: unknown, record: WatchlistStock) => (
-        <Space direction="vertical" size={0} style={{ fontSize: 12 }}>
-          {record.targetPrice && <Text type="success">目标: ¥{record.targetPrice}</Text>}
-          {record.stopPrice && <Text type="danger">止损: ¥{record.stopPrice}</Text>}
-          {!record.targetPrice && !record.stopPrice && <Text type="secondary">--</Text>}
-        </Space>
-      ),
+      title: '目标价',
+      key: 'targetPrice',
+      width: 100,
+      render: (_: unknown, record: WatchlistStock) => {
+        if (!record.targetPrice) return <Text type="secondary">--</Text>
+        const quote = quotes[record.stockCode]
+        const reached = quote && quote.price >= record.targetPrice
+        return (
+          <Tooltip title={reached ? '已达目标价!' : ''}>
+            <Text type={reached ? 'success' : undefined}>
+              ¥{record.targetPrice.toFixed(2)} {reached && '✓'}
+            </Text>
+          </Tooltip>
+        )
+      },
     },
     {
-      title: '行业',
-      dataIndex: 'industry',
-      key: 'industry',
-      render: (v: string | null) => v || <Text type="secondary">--</Text>,
+      title: '止损价',
+      key: 'stopPrice',
+      width: 100,
+      render: (_: unknown, record: WatchlistStock) => {
+        if (!record.stopPrice) return <Text type="secondary">--</Text>
+        const quote = quotes[record.stockCode]
+        const triggered = quote && quote.price <= record.stopPrice
+        return (
+          <Tooltip title={triggered ? '已触发止损!' : ''}>
+            <Text type={triggered ? 'danger' : undefined}>
+              ¥{record.stopPrice.toFixed(2)} {triggered && '!'}
+            </Text>
+          </Tooltip>
+        )
+      },
     },
     {
       title: '操作',
@@ -171,17 +231,59 @@ const WatchlistPage: React.FC = () => {
   return (
     <div style={{ padding: '0 0 24px 0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>自选股</Title>
+        <Title level={3} style={{ margin: 0 }}>
+          <StarFilled style={{ marginRight: 8, color: '#faad14' }} />
+          自选股
+        </Title>
         <Space>
           <Button icon={<ReloadOutlined />} onClick={fetchQuotes}>刷新行情</Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>添加股票</Button>
         </Space>
       </div>
 
-      <Card>
+      {/* 统计卡片 */}
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col span={6}>
+          <Card size="small">
+            <Statistic title="自选总数" value={stats.total} suffix="只" />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">
+            <Statistic title="上涨" value={stats.upCount} valueStyle={{ color: '#cf1322' }} suffix="只" />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">
+            <Statistic title="下跌" value={stats.downCount} valueStyle={{ color: '#3f8600' }} suffix="只" />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">
+            <Statistic title="平盘" value={stats.flatCount} suffix="只" />
+          </Card>
+        </Col>
+      </Row>
+
+      <Card
+        title={
+          <Space>
+            <FilterOutlined />
+            <span>筛选</span>
+            <Select
+              allowClear
+              placeholder="按行业筛选"
+              style={{ width: 150 }}
+              value={filterIndustry}
+              onChange={setFilterIndustry}
+              options={industries.map(i => ({ label: i, value: i }))}
+            />
+          </Space>
+        }
+      >
         <Spin spinning={loading}>
-          {stocks.length > 0 ? (
-            <Table columns={columns} dataSource={stocks} rowKey="id" pagination={false} />
+          {filteredStocks.length > 0 ? (
+            <Table columns={columns} dataSource={filteredStocks} rowKey="id" pagination={false} scroll={{ x: 900 }} />
           ) : (
             <Empty description="暂无自选股">
               <Button type="primary" onClick={handleAdd}>添加股票</Button>

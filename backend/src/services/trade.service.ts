@@ -340,4 +340,79 @@ export class TradeService {
       totalStats,
     };
   }
+
+  // 获取交易日历数据
+  static async getTradeCalendar(userId: string, year: number, month: number) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    const trades = await prisma.trade.findMany({
+      where: {
+        diary: {
+          userId,
+          date: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      },
+      include: {
+        diary: {
+          select: {
+            date: true,
+          },
+        },
+      },
+    });
+
+    // 按日期分组统计
+    const calendarData: Record<string, {
+      date: string;
+      tradeCount: number;
+      buyCount: number;
+      sellCount: number;
+      totalAmount: number;
+      profit: number;
+      stocks: string[];
+    }> = {};
+
+    trades.forEach((trade) => {
+      const dateStr = trade.diary.date.toISOString().split('T')[0];
+
+      if (!calendarData[dateStr]) {
+        calendarData[dateStr] = {
+          date: dateStr,
+          tradeCount: 0,
+          buyCount: 0,
+          sellCount: 0,
+          totalAmount: 0,
+          profit: 0,
+          stocks: [],
+        };
+      }
+
+      const data = calendarData[dateStr];
+      const price = Number(trade.price);
+      const amount = price * trade.quantity;
+
+      data.tradeCount++;
+      data.totalAmount += amount;
+
+      if (trade.direction === 'BUY') {
+        data.buyCount++;
+      } else {
+        data.sellCount++;
+      }
+
+      if (!data.stocks.includes(trade.stockName)) {
+        data.stocks.push(trade.stockName);
+      }
+    });
+
+    return {
+      year,
+      month,
+      data: calendarData,
+    };
+  }
 }

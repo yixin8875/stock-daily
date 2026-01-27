@@ -209,4 +209,82 @@ export class PositionService {
       })),
     };
   }
+
+  /**
+   * 获取持仓分析数据
+   */
+  static async getPositionAnalysis(userId: string) {
+    const positions = await prisma.position.findMany({
+      where: { userId },
+    });
+
+    if (positions.length === 0) {
+      return {
+        summary: { stockCount: 0, totalCost: 0, totalValue: 0, totalProfit: 0, profitRate: 0 },
+        industryDistribution: [],
+        positionDistribution: [],
+        riskAnalysis: { highRisk: [], mediumRisk: [], lowRisk: [] },
+      };
+    }
+
+    const totalCost = positions.reduce((sum, p) => sum + Number(p.totalCost), 0);
+
+    // 行业分布统计
+    const industryMap: Record<string, { count: number; cost: number }> = {};
+    positions.forEach(p => {
+      const industry = p.industry || '未分类';
+      if (!industryMap[industry]) {
+        industryMap[industry] = { count: 0, cost: 0 };
+      }
+      industryMap[industry].count++;
+      industryMap[industry].cost += Number(p.totalCost);
+    });
+
+    const industryDistribution = Object.entries(industryMap).map(([name, data]) => ({
+      name,
+      count: data.count,
+      cost: data.cost,
+      percentage: totalCost > 0 ? (data.cost / totalCost) * 100 : 0,
+    }));
+
+    // 仓位分布
+    const positionDistribution = positions.map(p => ({
+      stockCode: p.stockCode,
+      stockName: p.stockName,
+      cost: Number(p.totalCost),
+      percentage: totalCost > 0 ? (Number(p.totalCost) / totalCost) * 100 : 0,
+      quantity: p.quantity,
+    })).sort((a, b) => b.cost - a.cost);
+
+    // 风险分析
+    const riskAnalysis = {
+      highRisk: [] as string[],
+      mediumRisk: [] as string[],
+      lowRisk: [] as string[],
+    };
+
+    positions.forEach(p => {
+      const percentage = totalCost > 0 ? (Number(p.totalCost) / totalCost) * 100 : 0;
+      if (percentage > 30) {
+        riskAnalysis.highRisk.push(p.stockName);
+      } else if (percentage > 15) {
+        riskAnalysis.mediumRisk.push(p.stockName);
+      } else {
+        riskAnalysis.lowRisk.push(p.stockName);
+      }
+    });
+
+    return {
+      summary: {
+        stockCount: positions.length,
+        totalCost,
+        totalValue: totalCost,
+        totalProfit: 0,
+        profitRate: 0,
+      },
+      industryDistribution,
+      positionDistribution,
+      riskAnalysis,
+    };
+  }
 }

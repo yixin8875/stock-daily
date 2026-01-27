@@ -130,6 +130,11 @@ const menuItems = [
         label: '我的持仓',
       },
       {
+        key: '/positions/analysis',
+        icon: <BarChartOutlined />,
+        label: '持仓分析',
+      },
+      {
         key: '/positions/calculator',
         icon: <CalculatorOutlined />,
         label: '仓位计算器',

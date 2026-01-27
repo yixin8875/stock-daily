@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react'
-import { Calendar, Card, Badge, Typography, Space, Tag, Modal, List, Spin } from 'antd'
+import React, { useEffect, useState, useMemo } from 'react'
+import { Calendar, Card, Badge, Typography, Space, Tag, Modal, List, Spin, Row, Col, Statistic, Button, Tooltip } from 'antd'
+import { LeftOutlined, RightOutlined, CalendarOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { tradeService, type Trade } from '@/services'
+import { useThemeStore } from '@/stores'
+import TradeDetailModal from '../diary/components/TradeDetailModal'
 
 const { Text, Title } = Typography
 
@@ -19,6 +22,19 @@ const TradeCalendarPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [modalVisible, setModalVisible] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(dayjs())
+  const [detailModalVisible, setDetailModalVisible] = useState(false)
+  const [selectedStock, setSelectedStock] = useState<{ code: string; name: string } | null>(null)
+  const { mode } = useThemeStore()
+
+  // 月度统计
+  const monthStats = useMemo(() => {
+    const days = Array.from(tradeData.values())
+    const totalBuys = days.reduce((sum, d) => sum + d.trades.filter(t => t.direction === 'BUY').length, 0)
+    const totalSells = days.reduce((sum, d) => sum + d.trades.filter(t => t.direction === 'SELL').length, 0)
+    const totalAmount = days.reduce((sum, d) => sum + Math.abs(d.totalAmount), 0)
+    const netAmount = days.reduce((sum, d) => sum + d.totalAmount, 0)
+    return { tradeDays: days.length, totalBuys, totalSells, totalAmount, netAmount }
+  }, [tradeData])
 
   const fetchMonthTrades = async (month: Dayjs) => {
     setLoading(true)
@@ -68,19 +84,36 @@ const TradeCalendarPage: React.FC = () => {
     const isPositive = dayData.totalAmount > 0
     const isNegative = dayData.totalAmount < 0
 
+    // 热力图颜色强度
+    const maxAmount = Math.max(...Array.from(tradeData.values()).map(d => Math.abs(d.totalAmount)), 1)
+    const intensity = Math.min(Math.abs(dayData.totalAmount) / maxAmount, 1)
+    const bgColor = isPositive
+      ? `rgba(16, 185, 129, ${0.1 + intensity * 0.3})`
+      : isNegative
+        ? `rgba(239, 68, 68, ${0.1 + intensity * 0.3})`
+        : mode === 'dark' ? 'rgba(100,100,100,0.2)' : 'rgba(200,200,200,0.3)'
+
     return (
-      <div style={{ padding: 2 }}>
-        <Badge
-          count={dayData.tradeCount}
-          size="small"
-          style={{ backgroundColor: isPositive ? '#10B981' : isNegative ? '#EF4444' : '#6B7280' }}
-        />
-        {dayData.totalAmount !== 0 && (
-          <div style={{ fontSize: 10, color: isPositive ? '#10B981' : '#EF4444' }}>
-            {isPositive ? '+' : ''}{dayData.totalAmount.toFixed(0)}
-          </div>
-        )}
-      </div>
+      <Tooltip title={`${dayData.tradeCount}笔交易，净额: ${dayData.totalAmount >= 0 ? '+' : ''}${dayData.totalAmount.toFixed(0)}`}>
+        <div style={{
+          padding: 4,
+          borderRadius: 4,
+          backgroundColor: bgColor,
+          minHeight: 40,
+          cursor: 'pointer'
+        }}>
+          <Badge
+            count={dayData.tradeCount}
+            size="small"
+            style={{ backgroundColor: isPositive ? '#10B981' : isNegative ? '#EF4444' : '#6B7280' }}
+          />
+          {dayData.totalAmount !== 0 && (
+            <div style={{ fontSize: 10, color: isPositive ? '#10B981' : '#EF4444', fontWeight: 500 }}>
+              {isPositive ? '+' : ''}{dayData.totalAmount.toFixed(0)}
+            </div>
+          )}
+        </div>
+      </Tooltip>
     )
   }
 
@@ -99,13 +132,69 @@ const TradeCalendarPage: React.FC = () => {
 
   const selectedDayData = selectedDate ? tradeData.get(selectedDate) : null
 
+  const handlePrevMonth = () => setCurrentMonth(currentMonth.subtract(1, 'month'))
+  const handleNextMonth = () => setCurrentMonth(currentMonth.add(1, 'month'))
+  const handleToday = () => setCurrentMonth(dayjs())
+
   return (
     <div style={{ padding: '0 0 24px 0' }}>
-      <Title level={3} style={{ marginBottom: 24 }}>交易日历</Title>
+      {/* 页面标题和导航 */}
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Title level={3} style={{ margin: 0 }}>
+          <CalendarOutlined style={{ marginRight: 8 }} />
+          交易日历
+        </Title>
+        <Space>
+          <Button icon={<LeftOutlined />} onClick={handlePrevMonth} />
+          <Button onClick={handleToday}>今天</Button>
+          <Button icon={<RightOutlined />} onClick={handleNextMonth} />
+        </Space>
+      </div>
 
+      {/* 月度统计卡片 */}
+      <Card style={{ marginBottom: 16 }}>
+        <Row gutter={16}>
+          <Col span={4}>
+            <Statistic title="交易天数" value={monthStats.tradeDays} suffix="天" />
+          </Col>
+          <Col span={5}>
+            <Statistic
+              title="买入次数"
+              value={monthStats.totalBuys}
+              valueStyle={{ color: '#cf1322' }}
+              prefix={<ArrowUpOutlined />}
+              suffix="次"
+            />
+          </Col>
+          <Col span={5}>
+            <Statistic
+              title="卖出次数"
+              value={monthStats.totalSells}
+              valueStyle={{ color: '#3f8600' }}
+              prefix={<ArrowDownOutlined />}
+              suffix="次"
+            />
+          </Col>
+          <Col span={5}>
+            <Statistic title="交易总额" value={monthStats.totalAmount} precision={0} prefix="¥" />
+          </Col>
+          <Col span={5}>
+            <Statistic
+              title="当月净额"
+              value={monthStats.netAmount}
+              precision={0}
+              prefix="¥"
+              valueStyle={{ color: monthStats.netAmount >= 0 ? '#3f8600' : '#cf1322' }}
+            />
+          </Col>
+        </Row>
+      </Card>
+
+      {/* 日历主体 */}
       <Spin spinning={loading}>
         <Card>
           <Calendar
+            value={currentMonth}
             cellRender={(current, info) => {
               if (info.type === 'date') return dateCellRender(current)
               return info.originNode
@@ -121,7 +210,7 @@ const TradeCalendarPage: React.FC = () => {
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
-        width={600}
+        width={650}
       >
         {selectedDayData && (
           <>
@@ -134,7 +223,13 @@ const TradeCalendarPage: React.FC = () => {
             <List
               dataSource={selectedDayData.trades}
               renderItem={(trade) => (
-                <List.Item>
+                <List.Item
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setSelectedStock({ code: trade.stockCode, name: trade.stockName })
+                    setDetailModalVisible(true)
+                  }}
+                >
                   <div style={{ width: '100%' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Space>
@@ -145,9 +240,9 @@ const TradeCalendarPage: React.FC = () => {
                         </Tag>
                       </Space>
                       <Space>
-                        <Text>¥{trade.price.toFixed(2)}</Text>
+                        <Text>¥{Number(trade.price).toFixed(2)}</Text>
                         <Text type="secondary">x{trade.quantity}</Text>
-                        <Text type="secondary">¥{trade.amount.toFixed(2)}</Text>
+                        <Text type="secondary">¥{Number(trade.amount).toFixed(2)}</Text>
                       </Space>
                     </div>
                   </div>
@@ -157,6 +252,19 @@ const TradeCalendarPage: React.FC = () => {
           </>
         )}
       </Modal>
+
+      {/* 股票详情模态框 */}
+      {selectedStock && (
+        <TradeDetailModal
+          visible={detailModalVisible}
+          stockCode={selectedStock.code}
+          stockName={selectedStock.name}
+          onClose={() => {
+            setDetailModalVisible(false)
+            setSelectedStock(null)
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -11,6 +11,9 @@ router.use(authMiddleware);
 // Get trade statistics
 router.get('/statistics', TradeController.getStatistics);
 
+// Get trade calendar
+router.get('/calendar', TradeController.getCalendar);
+
 // Get stock trade history
 router.get('/stock/:stockCode/history', TradeController.getStockHistory);
 

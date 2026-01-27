@@ -72,6 +72,24 @@ export interface TradeStatisticsResponse {
   totalStats: TotalStats
 }
 
+// 交易日历单日数据
+export interface TradeCalendarDay {
+  date: string
+  tradeCount: number
+  buyCount: number
+  sellCount: number
+  totalAmount: number
+  profit: number
+  stocks: string[]
+}
+
+// 交易日历响应
+export interface TradeCalendarResponse {
+  year: number
+  month: number
+  data: Record<string, TradeCalendarDay>
+}
+
 // 带 success 字段的响应类型
 interface SuccessResponse<T> {
   success: boolean
@@ -115,5 +133,12 @@ export const tradeService = {
   // 获取单个交易详情
   getTradeById: (id: string) => {
     return request.get<SuccessResponse<Trade>>(`/trades/${id}`)
+  },
+
+  // 获取交易日历数据
+  getCalendar: (year: number, month: number) => {
+    return request.get<SuccessResponse<never> & TradeCalendarResponse>('/trades/calendar', {
+      params: { year, month },
+    })
   },
 }

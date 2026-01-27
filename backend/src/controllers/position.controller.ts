@@ -98,4 +98,16 @@ export class PositionController {
       next(error);
     }
   }
+
+  /**
+   * 获取持仓分析
+   */
+  static async getPositionAnalysis(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const analysis = await PositionService.getPositionAnalysis(req.userId!);
+      res.json({ success: true, data: analysis });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

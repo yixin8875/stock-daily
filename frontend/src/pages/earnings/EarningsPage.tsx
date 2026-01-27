@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import {
   Card, Table, Button, Space, Typography, Tag, message, Modal, Form, Input,
-  DatePicker, Select, Popconfirm, Empty, Spin, Calendar, Badge
+  DatePicker, Select, Popconfirm, Empty, Spin, Calendar, Badge, Row, Col, Statistic, Alert
 } from 'antd'
-import { PlusOutlined, DeleteOutlined, EditOutlined, CalendarOutlined } from '@ant-design/icons'
+import {
+  PlusOutlined, DeleteOutlined, EditOutlined, CalendarOutlined,
+  BellOutlined, UnorderedListOutlined
+} from '@ant-design/icons'
 import dayjs, { Dayjs } from 'dayjs'
 import { earningsService, type EarningsEvent } from '@/services'
 
@@ -23,6 +26,7 @@ const EarningsPage: React.FC = () => {
   const [editingEvent, setEditingEvent] = useState<EarningsEvent | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const [form] = Form.useForm()
+  const [filterType, setFilterType] = useState<string | null>(null)
 
   const fetchEarnings = async () => {
     setLoading(true)
@@ -83,6 +87,37 @@ const EarningsPage: React.FC = () => {
       message.error('删除失败')
     }
   }
+
+  // 统计数据
+  const stats = useMemo(() => {
+    const now = dayjs()
+    const upcoming = earnings.filter(e => dayjs(e.reportDate).isAfter(now))
+    const thisWeek = upcoming.filter(e => dayjs(e.reportDate).diff(now, 'day') <= 7)
+    const thisMonth = upcoming.filter(e => dayjs(e.reportDate).diff(now, 'day') <= 30)
+    return {
+      total: earnings.length,
+      upcoming: upcoming.length,
+      thisWeek: thisWeek.length,
+      thisMonth: thisMonth.length,
+    }
+  }, [earnings])
+
+  // 即将发布的财报（7天内）
+  const upcomingEarnings = useMemo(() => {
+    const now = dayjs()
+    return earnings
+      .filter(e => {
+        const date = dayjs(e.reportDate)
+        return date.isAfter(now) && date.diff(now, 'day') <= 7
+      })
+      .sort((a, b) => dayjs(a.reportDate).unix() - dayjs(b.reportDate).unix())
+  }, [earnings])
+
+  // 筛选后的数据
+  const filteredEarnings = useMemo(() => {
+    if (!filterType) return earnings
+    return earnings.filter(e => e.reportType === filterType)
+  }, [earnings, filterType])
 
   const getDateEarnings = (date: Dayjs) => {
     return earnings.filter(e => dayjs(e.reportDate).isSame(date, 'day'))
@@ -160,10 +195,13 @@ const EarningsPage: React.FC = () => {
   return (
     <div style={{ padding: '0 0 24px 0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>财报日历</Title>
+        <Title level={3} style={{ margin: 0 }}>
+          <CalendarOutlined style={{ marginRight: 8 }} />
+          财报日历
+        </Title>
         <Space>
           <Button
-            icon={<CalendarOutlined />}
+            icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
             onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
           >
             {viewMode === 'list' ? '日历视图' : '列表视图'}
@@ -172,11 +210,69 @@ const EarningsPage: React.FC = () => {
         </Space>
       </div>
 
-      <Card>
+      {/* 即将发布提醒 */}
+      {upcomingEarnings.length > 0 && (
+        <Alert
+          type="warning"
+          icon={<BellOutlined />}
+          message={`${upcomingEarnings.length} 只股票将在7天内发布财报`}
+          description={
+            <Space wrap style={{ marginTop: 8 }}>
+              {upcomingEarnings.map(e => (
+                <Tag key={e.id} color="orange">
+                  {e.stockName} - {dayjs(e.reportDate).format('MM/DD')} ({e.reportType})
+                </Tag>
+              ))}
+            </Space>
+          }
+          style={{ marginBottom: 16 }}
+          showIcon
+        />
+      )}
+
+      {/* 统计卡片 */}
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col span={6}>
+          <Card size="small">
+            <Statistic title="财报总数" value={stats.total} suffix="条" />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">
+            <Statistic title="待发布" value={stats.upcoming} valueStyle={{ color: '#1890ff' }} suffix="条" />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">
+            <Statistic title="本周发布" value={stats.thisWeek} valueStyle={{ color: '#faad14' }} suffix="条" />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">
+            <Statistic title="本月发布" value={stats.thisMonth} suffix="条" />
+          </Card>
+        </Col>
+      </Row>
+
+      <Card
+        title={
+          <Space>
+            <span>财报列表</span>
+            <Select
+              allowClear
+              placeholder="按类型筛选"
+              style={{ width: 120 }}
+              value={filterType}
+              onChange={setFilterType}
+              options={reportTypes}
+            />
+          </Space>
+        }
+      >
         <Spin spinning={loading}>
           {viewMode === 'list' ? (
-            earnings.length > 0 ? (
-              <Table columns={columns} dataSource={earnings} rowKey="id" pagination={{ pageSize: 10 }} />
+            filteredEarnings.length > 0 ? (
+              <Table columns={columns} dataSource={filteredEarnings} rowKey="id" pagination={{ pageSize: 10 }} />
             ) : (
               <Empty description="暂无财报日程">
                 <Button type="primary" onClick={handleAdd}>添加财报</Button>

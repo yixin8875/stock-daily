@@ -8,6 +8,7 @@ router.use(authMiddleware);
 
 router.get('/', PositionController.getPositions);
 router.get('/summary', PositionController.getPositionSummary);
+router.get('/analysis', PositionController.getPositionAnalysis);
 router.post('/', PositionController.addPosition);
 router.put('/:id', PositionController.updatePosition);
 router.post('/:id/reduce', PositionController.reducePosition);

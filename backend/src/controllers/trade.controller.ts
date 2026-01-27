@@ -162,4 +162,25 @@ export class TradeController {
       next(error);
     }
   }
+
+  // 获取交易日历数据
+  static async getCalendar(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      if (!req.userId) {
+        throw new ApiError(401, 'Unauthorized');
+      }
+
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      const month = parseInt(req.query.month as string) || new Date().getMonth() + 1;
+
+      const result = await TradeService.getTradeCalendar(req.userId, year, month);
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

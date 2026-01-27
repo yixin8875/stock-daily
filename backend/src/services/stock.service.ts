@@ -107,7 +107,7 @@ export class StockService {
         params: {
           input: keyword,
           type: 14,
-          token: 'D43BF722C8E33BDC906FB84D85E326E8',
+          token: process.env.EASTMONEY_API_TOKEN || 'D43BF722C8E33BDC906FB84D85E326E8',
           count: 10,
         },
       });

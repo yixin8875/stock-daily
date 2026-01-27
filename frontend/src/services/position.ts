@@ -27,6 +27,35 @@ export interface PositionInput {
   notes?: string
 }
 
+// 持仓分析类型
+export interface PositionAnalysis {
+  summary: {
+    stockCount: number
+    totalCost: number
+    totalValue: number
+    totalProfit: number
+    profitRate: number
+  }
+  industryDistribution: {
+    name: string
+    count: number
+    cost: number
+    percentage: number
+  }[]
+  positionDistribution: {
+    stockCode: string
+    stockName: string
+    cost: number
+    percentage: number
+    quantity: number
+  }[]
+  riskAnalysis: {
+    highRisk: string[]
+    mediumRisk: string[]
+    lowRisk: string[]
+  }
+}
+
 export const positionService = {
   getPositions: () => {
     return request.get<ApiResponse<Position[]>>('/positions')
@@ -54,5 +83,9 @@ export const positionService = {
 
   deletePosition: (id: string) => {
     return request.delete<ApiResponse<void>>(`/positions/${id}`)
+  },
+
+  getAnalysis: () => {
+    return request.get<ApiResponse<PositionAnalysis>>('/positions/analysis')
   },
 }

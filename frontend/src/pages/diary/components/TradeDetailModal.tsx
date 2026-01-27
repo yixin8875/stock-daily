@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { Modal, Descriptions, Table, Statistic, Row, Col, Card, Tag, Spin, Empty, Divider } from 'antd'
-import { ArrowUpOutlined, ArrowDownOutlined, StockOutlined } from '@ant-design/icons'
+import { Modal, Descriptions, Table, Statistic, Row, Col, Card, Tag, Spin, Empty, Divider, Tabs } from 'antd'
+import { ArrowUpOutlined, ArrowDownOutlined, StockOutlined, LineChartOutlined, BarChartOutlined, TableOutlined } from '@ant-design/icons'
 import { tradeService, type Trade, type StockStatistics } from '@/services'
 import dayjs from 'dayjs'
+import TradeProfitChart from './TradeProfitChart'
+import TradeScatterChart from './TradeScatterChart'
+import TradeVolumeChart from './TradeVolumeChart'
 
 interface TradeDetailModalProps {
   visible: boolean
@@ -176,20 +179,50 @@ const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
           </>
         )}
 
-        <Divider>交易历史</Divider>
-
-        {trades.length > 0 ? (
-          <Table
-            columns={columns}
-            dataSource={trades}
-            rowKey="id"
-            size="small"
-            pagination={{ pageSize: 10 }}
-            scroll={{ x: 700 }}
-          />
-        ) : (
-          <Empty description="暂无交易记录" />
-        )}
+        <Tabs
+          defaultActiveKey="charts"
+          items={[
+            {
+              key: 'charts',
+              label: <span><LineChartOutlined /> 图表分析</span>,
+              children: (
+                <Row gutter={[16, 16]}>
+                  <Col span={24}>
+                    <Card size="small" title="盈亏曲线">
+                      <TradeProfitChart trades={trades} avgBuyPrice={statistics?.avgBuyPrice || 0} />
+                    </Card>
+                  </Col>
+                  <Col span={12}>
+                    <Card size="small" title="买卖点分布">
+                      <TradeScatterChart trades={trades} />
+                    </Card>
+                  </Col>
+                  <Col span={12}>
+                    <Card size="small" title="交易量分布">
+                      <TradeVolumeChart trades={trades} />
+                    </Card>
+                  </Col>
+                </Row>
+              ),
+            },
+            {
+              key: 'table',
+              label: <span><TableOutlined /> 交易明细</span>,
+              children: trades.length > 0 ? (
+                <Table
+                  columns={columns}
+                  dataSource={trades}
+                  rowKey="id"
+                  size="small"
+                  pagination={{ pageSize: 10 }}
+                  scroll={{ x: 700 }}
+                />
+              ) : (
+                <Empty description="暂无交易记录" />
+              ),
+            },
+          ]}
+        />
       </Spin>
     </Modal>
   )
