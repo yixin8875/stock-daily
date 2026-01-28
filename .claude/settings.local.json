@@ -34,7 +34,9 @@
       "Bash(pnpm add -D @types/react-grid-layout)",
       "Bash(pnpm add react-resizable)",
       "Bash(ls:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(npm install:*)",
+      "Bash(cat:*)"
     ]
   }
 }

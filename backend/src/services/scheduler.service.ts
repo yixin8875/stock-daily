@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+import * as cron from 'node-cron';
 import { MarketService } from './market.service';
 import { cacheService, CacheKeys, CacheTTL } from './cache.service';
 
@@ -46,7 +46,7 @@ class SchedulerService {
       } catch (error) {
         console.error(`[Scheduler] Task ${name} failed:`, error);
       }
-    }, { scheduled: false });
+    });
 
     this.tasks.set(name, task);
     this.taskConfigs.set(name, {

@@ -24,30 +24,33 @@ export interface PortfolioSummary {
 
 export class PositionAnalyzer {
   static async analyze(userId: string, currentPrices: Map<string, number>): Promise<PortfolioSummary> {
-    const trades = await prisma.trade.findMany({
+    const diaries = await prisma.diary.findMany({
       where: { userId },
-      orderBy: { tradeTime: 'asc' },
+      include: { trades: true },
+      orderBy: { date: 'asc' },
     });
 
     const holdings = new Map<string, { qty: number; cost: number; name: string; firstBuy: Date }>();
 
-    for (const trade of trades) {
-      const key = trade.stockCode;
-      const current = holdings.get(key) || { qty: 0, cost: 0, name: trade.stockName, firstBuy: trade.tradeTime };
+    for (const diary of diaries) {
+      for (const trade of diary.trades) {
+        const key = trade.stockCode;
+        const current = holdings.get(key) || { qty: 0, cost: 0, name: trade.stockName, firstBuy: diary.date };
 
-      if (trade.type === 'buy') {
-        current.cost += trade.price * trade.quantity;
-        current.qty += trade.quantity;
-      } else {
-        const avgCost = current.qty > 0 ? current.cost / current.qty : 0;
-        current.cost -= avgCost * trade.quantity;
-        current.qty -= trade.quantity;
-      }
+        if (trade.direction === 'BUY') {
+          current.cost += Number(trade.price) * trade.quantity;
+          current.qty += trade.quantity;
+        } else {
+          const avgCost = current.qty > 0 ? current.cost / current.qty : 0;
+          current.cost -= avgCost * trade.quantity;
+          current.qty -= trade.quantity;
+        }
 
-      if (current.qty > 0) {
-        holdings.set(key, current);
-      } else {
-        holdings.delete(key);
+        if (current.qty > 0) {
+          holdings.set(key, current);
+        } else {
+          holdings.delete(key);
+        }
       }
     }
 

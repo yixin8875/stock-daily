@@ -46,11 +46,11 @@ class ImportExportService {
     const sheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
 
-    return data.map(row => ({
+    return data.map((row: Record<string, any>) => ({
       date: String(row['日期'] || row['date'] || ''),
       stockCode: String(row['股票代码'] || row['stockCode'] || ''),
       stockName: String(row['股票名称'] || row['stockName'] || ''),
-      type: (row['类型'] || row['type'] || '').toLowerCase() === 'sell' ? 'sell' : 'buy',
+      type: (String(row['类型'] || row['type'] || '').toLowerCase() === 'sell' ? 'sell' : 'buy') as 'buy' | 'sell',
       price: parseFloat(row['价格'] || row['price'] || 0),
       quantity: parseInt(row['数量'] || row['quantity'] || 0),
       amount: parseFloat(row['金额'] || row['amount'] || 0),
@@ -83,25 +83,47 @@ class ImportExportService {
   async importTrades(userId: string, rows: TradeImportRow[]): Promise<ImportResult> {
     const result: ImportResult = { success: 0, failed: 0, errors: [] };
 
+    // 按日期分组
+    const groupedByDate = new Map<string, TradeImportRow[]>();
     for (const row of rows) {
+      const dateKey = row.date.split('T')[0];
+      if (!groupedByDate.has(dateKey)) {
+        groupedByDate.set(dateKey, []);
+      }
+      groupedByDate.get(dateKey)!.push(row);
+    }
+
+    for (const [dateStr, trades] of groupedByDate) {
       try {
-        await prisma.trade.create({
-          data: {
-            userId,
-            stockCode: row.stockCode,
-            stockName: row.stockName,
-            type: row.type,
-            price: row.price,
-            quantity: row.quantity,
-            amount: row.amount || row.price * row.quantity,
-            commission: row.commission || 0,
-            tradeTime: new Date(row.date),
-          },
+        // 获取或创建当天的 Diary
+        let diary = await prisma.diary.findFirst({
+          where: { userId, date: new Date(dateStr) },
         });
-        result.success++;
+
+        if (!diary) {
+          diary = await prisma.diary.create({
+            data: { userId, date: new Date(dateStr) },
+          });
+        }
+
+        // 创建交易记录
+        for (const row of trades) {
+          await prisma.trade.create({
+            data: {
+              diaryId: diary.id,
+              stockCode: row.stockCode,
+              stockName: row.stockName,
+              direction: row.type === 'buy' ? 'BUY' : 'SELL',
+              price: row.price,
+              quantity: row.quantity,
+              amount: row.amount || row.price * row.quantity,
+            },
+          });
+          result.success++;
+        }
       } catch (error) {
-        result.failed++;
-        result.errors.push(`行 ${row.stockCode}: ${(error as Error).message}`);
+        result.failed += trades.length;
+        result.errors.push(`日期 ${dateStr}: ${(error as Error).message}`);
       }
     }
 
@@ -110,43 +132,54 @@ class ImportExportService {
 
   // 导出交易记录为 CSV
   async exportTradesToCSV(userId: string): Promise<string> {
-    const trades = await prisma.trade.findMany({
+    const diaries = await prisma.diary.findMany({
       where: { userId },
-      orderBy: { tradeTime: 'desc' },
+      include: { trades: true },
+      orderBy: { date: 'desc' },
     });
 
-    const headers = ['日期', '股票代码', '股票名称', '类型', '价格', '数量', '金额', '手续费'];
-    const rows = trades.map(t => [
-      t.tradeTime.toISOString().split('T')[0],
-      t.stockCode,
-      t.stockName,
-      t.type,
-      t.price,
-      t.quantity,
-      t.amount,
-      t.commission,
-    ].join(','));
+    const headers = ['日期', '股票代码', '股票名称', '类型', '价格', '数量', '金额'];
+    const rows: string[] = [];
+
+    for (const diary of diaries) {
+      for (const t of diary.trades) {
+        rows.push([
+          diary.date.toISOString().split('T')[0],
+          t.stockCode,
+          t.stockName,
+          t.direction,
+          t.price,
+          t.quantity,
+          t.amount,
+        ].join(','));
+      }
+    }
 
     return '\uFEFF' + [headers.join(','), ...rows].join('\n');
   }
 
   // 导出为 Excel
   async exportTradesToExcel(userId: string): Promise<Buffer> {
-    const trades = await prisma.trade.findMany({
+    const diaries = await prisma.diary.findMany({
       where: { userId },
-      orderBy: { tradeTime: 'desc' },
+      include: { trades: true },
+      orderBy: { date: 'desc' },
     });
 
-    const data = trades.map(t => ({
-      '日期': t.tradeTime.toISOString().split('T')[0],
-      '股票代码': t.stockCode,
-      '股票名称': t.stockName,
-      '类型': t.type === 'buy' ? '买入' : '卖出',
-      '价格': t.price,
-      '数量': t.quantity,
-      '金额': t.amount,
-      '手续费': t.commission,
-    }));
+    const data: Record<string, any>[] = [];
+    for (const diary of diaries) {
+      for (const t of diary.trades) {
+        data.push({
+          '日期': diary.date.toISOString().split('T')[0],
+          '股票代码': t.stockCode,
+          '股票名称': t.stockName,
+          '类型': t.direction === 'BUY' ? '买入' : '卖出',
+          '价格': t.price,
+          '数量': t.quantity,
+          '金额': t.amount,
+        });
+      }
+    }
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();

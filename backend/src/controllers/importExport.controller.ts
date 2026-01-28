@@ -1,10 +1,11 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { importExportService } from '../services/importExport.service';
+import { AuthRequest } from '../middlewares';
 
 export class ImportExportController {
-  static async importCSV(req: Request, res: Response) {
+  static async importCSV(req: AuthRequest, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         return res.status(401).json({ success: false, message: '未授权' });
       }
@@ -22,9 +23,9 @@ export class ImportExportController {
     }
   }
 
-  static async importExcel(req: Request, res: Response) {
+  static async importExcel(req: AuthRequest, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         return res.status(401).json({ success: false, message: '未授权' });
       }
@@ -41,9 +42,9 @@ export class ImportExportController {
     }
   }
 
-  static async exportCSV(req: Request, res: Response) {
+  static async exportCSV(req: AuthRequest, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         return res.status(401).json({ success: false, message: '未授权' });
       }
@@ -57,9 +58,9 @@ export class ImportExportController {
     }
   }
 
-  static async exportExcel(req: Request, res: Response) {
+  static async exportExcel(req: AuthRequest, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         return res.status(401).json({ success: false, message: '未授权' });
       }

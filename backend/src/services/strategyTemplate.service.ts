@@ -37,14 +37,28 @@ export const strategyTemplateService = {
 
   async create(userId: string, data: StrategyTemplateInput) {
     return prisma.strategyTemplate.create({
-      data: { userId, ...data },
+      data: {
+        userId,
+        name: data.name,
+        description: data.description,
+        category: data.category,
+        params: data.params as object,
+        isPublic: data.isPublic,
+      },
     });
   },
 
   async update(userId: string, id: string, data: Partial<StrategyTemplateInput>) {
+    const updateData: Record<string, unknown> = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.category !== undefined) updateData.category = data.category;
+    if (data.params !== undefined) updateData.params = data.params as object;
+    if (data.isPublic !== undefined) updateData.isPublic = data.isPublic;
+
     return prisma.strategyTemplate.update({
       where: { id, userId },
-      data,
+      data: updateData,
     });
   },
 

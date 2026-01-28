@@ -1,10 +1,11 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { strategyTemplateService } from '../services/strategyTemplate.service';
+import { AuthRequest } from '../middlewares';
 
 export class StrategyTemplateController {
-  static async getTemplates(req: Request, res: Response) {
+  static async getTemplates(req: AuthRequest, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) return res.status(401).json({ success: false, message: '未授权' });
       const data = await strategyTemplateService.getTemplates(userId);
       res.json({ success: true, data });
@@ -13,11 +14,11 @@ export class StrategyTemplateController {
     }
   }
 
-  static async getByCategory(req: Request, res: Response) {
+  static async getByCategory(req: AuthRequest, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) return res.status(401).json({ success: false, message: '未授权' });
-      const { category } = req.params;
+      const category = req.params.category as string;
       const data = await strategyTemplateService.getByCategory(userId, category);
       res.json({ success: true, data });
     } catch (error) {
@@ -25,9 +26,9 @@ export class StrategyTemplateController {
     }
   }
 
-  static async create(req: Request, res: Response) {
+  static async create(req: AuthRequest, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) return res.status(401).json({ success: false, message: '未授权' });
       const data = await strategyTemplateService.create(userId, req.body);
       res.json({ success: true, data });
@@ -36,11 +37,11 @@ export class StrategyTemplateController {
     }
   }
 
-  static async update(req: Request, res: Response) {
+  static async update(req: AuthRequest, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) return res.status(401).json({ success: false, message: '未授权' });
-      const { id } = req.params;
+      const id = req.params.id as string;
       const data = await strategyTemplateService.update(userId, id, req.body);
       res.json({ success: true, data });
     } catch (error) {
@@ -48,11 +49,11 @@ export class StrategyTemplateController {
     }
   }
 
-  static async delete(req: Request, res: Response) {
+  static async delete(req: AuthRequest, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) return res.status(401).json({ success: false, message: '未授权' });
-      const { id } = req.params;
+      const id = req.params.id as string;
       await strategyTemplateService.delete(userId, id);
       res.json({ success: true });
     } catch (error) {
