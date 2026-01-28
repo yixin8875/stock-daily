@@ -8,6 +8,7 @@ import {
   ArrowUpOutlined, ArrowDownOutlined, StarFilled, FilterOutlined
 } from '@ant-design/icons'
 import { watchlistService, stockService, type WatchlistStock, type StockQuote } from '@/services'
+import { StockSearch } from '@/components'
 
 const { Title, Text } = Typography
 
@@ -299,11 +300,21 @@ const WatchlistPage: React.FC = () => {
         onCancel={() => setModalVisible(false)}
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="stockCode" label="股票代码" rules={[{ required: true }]}>
-            <Input placeholder="如: 600000" disabled={!!editingStock} />
+          {!editingStock && (
+            <Form.Item label="搜索股票" required>
+              <StockSearch
+                placeholder="输入股票代码或名称搜索"
+                onChange={(code, name) => {
+                  form.setFieldsValue({ stockCode: code, stockName: name })
+                }}
+              />
+            </Form.Item>
+          )}
+          <Form.Item name="stockCode" hidden={!editingStock} label={editingStock ? "股票代码" : undefined}>
+            <Input disabled />
           </Form.Item>
-          <Form.Item name="stockName" label="股票名称" rules={[{ required: true }]}>
-            <Input placeholder="如: 浦发银行" disabled={!!editingStock} />
+          <Form.Item name="stockName" hidden={!editingStock} label={editingStock ? "股票名称" : undefined}>
+            <Input disabled />
           </Form.Item>
           <Form.Item name="industry" label="行业板块">
             <Input placeholder="如: 银行" />

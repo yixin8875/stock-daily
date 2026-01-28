@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Modal, Descriptions, Table, Statistic, Row, Col, Card, Tag, Spin, Empty, Divider, Tabs } from 'antd'
-import { ArrowUpOutlined, ArrowDownOutlined, StockOutlined, LineChartOutlined, BarChartOutlined, TableOutlined } from '@ant-design/icons'
+import { Modal, Descriptions, Table, Statistic, Row, Col, Card, Tag, Spin, Empty, Tabs } from 'antd'
+import { ArrowUpOutlined, ArrowDownOutlined, StockOutlined, LineChartOutlined, TableOutlined } from '@ant-design/icons'
 import { tradeService, type Trade, type StockStatistics } from '@/services'
 import dayjs from 'dayjs'
 import TradeProfitChart from './TradeProfitChart'

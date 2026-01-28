@@ -1,17 +1,24 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { Card, Row, Col, Typography, Statistic, Spin, Empty, List, Tag, Alert, Progress } from 'antd'
-import { WarningOutlined, PieChartOutlined, SafetyOutlined } from '@ant-design/icons'
+import { Card, Row, Col, Typography, Statistic, Spin, Empty, List, Tag, Alert, Progress, Space, Tooltip } from 'antd'
+import {
+  WarningOutlined, PieChartOutlined, SafetyOutlined, FundOutlined,
+  ArrowUpOutlined, ArrowDownOutlined, InfoCircleOutlined
+} from '@ant-design/icons'
 import ReactECharts from 'echarts-for-react'
 import {
   portfolioService, stockService, positionService,
   type PortfolioAnalysis, type StockQuote
 } from '@/services'
+import { useThemeStore } from '@/stores'
+import { getChartTheme, chartColors } from '@/utils/chartTheme'
 
 const { Title, Text } = Typography
 
 const PortfolioPage: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [analysis, setAnalysis] = useState<PortfolioAnalysis | null>(null)
+  const { mode } = useThemeStore()
+  const chartTheme = getChartTheme(mode)
 
   const fetchAnalysis = useCallback(async () => {
     setLoading(true)
@@ -46,18 +53,21 @@ const PortfolioPage: React.FC = () => {
   useEffect(() => { fetchAnalysis() }, [fetchAnalysis])
 
   const pieOption = analysis ? {
-    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    legend: { orient: 'vertical', right: 10, top: 'center' },
+    ...chartTheme,
+    tooltip: { ...chartTheme.tooltip, trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+    legend: { ...chartTheme.legend, orient: 'vertical', right: 10, top: 'center' },
     series: [{
       type: 'pie',
       radius: ['40%', '70%'],
+      center: ['40%', '50%'],
       avoidLabelOverlap: false,
-      itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+      itemStyle: { borderRadius: 10, borderColor: mode === 'dark' ? '#1E293B' : '#fff', borderWidth: 2 },
       label: { show: false },
       emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
-      data: analysis.distribution.map(d => ({
+      data: analysis.distribution.map((d, i) => ({
         name: d.industry,
         value: Math.round(d.marketValue),
+        itemStyle: { color: chartColors.series[i % chartColors.series.length] },
       })),
     }],
   } : {}
@@ -93,7 +103,10 @@ const PortfolioPage: React.FC = () => {
 
   return (
     <div style={{ padding: '0 0 24px 0' }}>
-      <Title level={3} style={{ marginBottom: 24 }}>投资组合分析</Title>
+      <Title level={3} style={{ marginBottom: 24 }}>
+        <FundOutlined style={{ marginRight: 8 }} />
+        投资组合分析
+      </Title>
 
       {/* 仓位预警 */}
       {warnings.length > 0 && (
@@ -154,6 +167,7 @@ const PortfolioPage: React.FC = () => {
               precision={2}
               prefix={metrics.totalProfit >= 0 ? '+¥' : '¥'}
               valueStyle={{ color: metrics.totalProfit >= 0 ? '#EF4444' : '#10B981' }}
+              suffix={metrics.totalProfit >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
             />
           </Col>
           <Col xs={12} sm={8} md={4}>
@@ -163,19 +177,35 @@ const PortfolioPage: React.FC = () => {
               precision={2}
               suffix="%"
               valueStyle={{ color: metrics.totalProfitRate >= 0 ? '#EF4444' : '#10B981' }}
+              prefix={metrics.totalProfitRate >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
             />
           </Col>
           <Col xs={12} sm={8} md={4}>
             <Statistic
-              title="夏普比率"
+              title={
+                <Space>
+                  <span>夏普比率</span>
+                  <Tooltip title="衡量风险调整后收益的指标。大于1表示收益超过风险，越高越好。计算公式：(组合收益率-无风险利率)/组合波动率">
+                    <InfoCircleOutlined style={{ color: '#8c8c8c', cursor: 'help' }} />
+                  </Tooltip>
+                </Space>
+              }
               value={metrics.sharpeRatio}
               precision={2}
               valueStyle={{ color: metrics.sharpeRatio >= 1 ? '#52C41A' : '#FF4D4F' }}
+              suffix={metrics.sharpeRatio >= 1 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
             />
           </Col>
           <Col xs={12} sm={8} md={4}>
             <Statistic
-              title="集中度风险"
+              title={
+                <Space>
+                  <span>集中度风险</span>
+                  <Tooltip title="基于HHI指数计算，衡量持仓集中程度。低于30%为分散，30-50%为适中，高于50%为集中。建议保持适度分散以降低风险">
+                    <InfoCircleOutlined style={{ color: '#8c8c8c', cursor: 'help' }} />
+                  </Tooltip>
+                </Space>
+              }
               value={metrics.concentrationRisk}
               precision={1}
               suffix="%"

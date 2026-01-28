@@ -30,6 +30,8 @@ import {
   BellOutlined,
   CalculatorOutlined,
   FundOutlined,
+  StarOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons'
 import { useAuthStore, useThemeStore } from '@/stores'
 
@@ -51,6 +53,16 @@ const menuItems = [
     key: '/quotes',
     icon: <StockOutlined />,
     label: '股票行情',
+  },
+  {
+    key: '/watchlist',
+    icon: <StarOutlined />,
+    label: '自选股',
+  },
+  {
+    key: '/earnings',
+    icon: <CalendarOutlined />,
+    label: '财报日历',
   },
   {
     key: '/news',
@@ -143,6 +155,11 @@ const menuItems = [
         key: '/alerts',
         icon: <BellOutlined />,
         label: '价格提醒',
+      },
+      {
+        key: '/signals',
+        icon: <ThunderboltOutlined />,
+        label: '交易信号',
       },
     ],
   },

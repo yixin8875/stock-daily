@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Card, Row, Col, Statistic, Spin, Typography, Tag, Alert, Space } from 'antd'
-import { PieChartOutlined, WarningOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
+import { Card, Row, Col, Statistic, Spin, Typography, Alert, Space } from 'antd'
+import { PieChartOutlined, WarningOutlined } from '@ant-design/icons'
 import { positionService, type PositionAnalysis } from '@/services'
 import { IndustryPieChart, PositionBarChart } from './components'
 
@@ -18,9 +18,7 @@ const PositionAnalysisPage: React.FC = () => {
     setLoading(true)
     try {
       const res = await positionService.getAnalysis()
-      if (res.data.success) {
-        setAnalysis(res.data.data)
-      }
+      setAnalysis(res.data.data || null)
     } catch (error) {
       console.error('获取持仓分析失败:', error)
     } finally {

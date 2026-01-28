@@ -27,7 +27,7 @@ export type { ProfitPoint, DrawdownInfo, TradeReview, PeriodReport, TradingInsig
 export type { TradingAccount, CreateAccountParams, UpdateAccountParams, AccountStats } from './account'
 export type { BacktestResult, BacktestTrade } from './backtest'
 export type { Position, PositionInput, PositionAnalysis } from './position'
-export type { PriceAlert, AlertInput, AlertType } from './alert'
+export type { PriceAlert, AlertInput, AlertType, StopLossAdvice, PositionAdvice, ReviewReminder } from './alert'
 export type { WatchlistStock, WatchlistInput } from './watchlist'
 export type { EarningsEvent, EarningsInput } from './earnings'
 export type { TradeSignal, SignalInput, SignalType, SignalDirection } from './signal'

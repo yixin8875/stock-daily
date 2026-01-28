@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons'
 import dayjs, { Dayjs } from 'dayjs'
 import { earningsService, type EarningsEvent } from '@/services'
+import { StockSearch } from '@/components'
 
 const { Title, Text } = Typography
 
@@ -291,12 +292,18 @@ const EarningsPage: React.FC = () => {
         onCancel={() => setModalVisible(false)}
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="stockCode" label="股票代码" rules={[{ required: true }]}>
-            <Input placeholder="如: 600000" />
-          </Form.Item>
-          <Form.Item name="stockName" label="股票名称" rules={[{ required: true }]}>
-            <Input placeholder="如: 浦发银行" />
-          </Form.Item>
+          {!editingEvent && (
+            <Form.Item label="搜索股票" required>
+              <StockSearch
+                placeholder="输入股票代码或名称搜索"
+                onChange={(code, name) => {
+                  form.setFieldsValue({ stockCode: code, stockName: name })
+                }}
+              />
+            </Form.Item>
+          )}
+          <Form.Item name="stockCode" hidden><input /></Form.Item>
+          <Form.Item name="stockName" hidden><input /></Form.Item>
           <Form.Item name="reportDate" label="发布日期" rules={[{ required: true }]}>
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>

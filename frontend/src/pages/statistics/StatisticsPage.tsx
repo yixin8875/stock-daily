@@ -12,6 +12,12 @@ import {
   StockTradesSummary,
   WinRateTrendChart,
   EmotionProfitChart,
+  AdvancedMetricsCard,
+  ProfitAttributionChart,
+  RiskWarningsPanel,
+  IndexCompareChart,
+  TradeHeatmap,
+  CashFlowChart,
 } from './components'
 
 const { Title } = Typography
@@ -40,6 +46,24 @@ const StatisticsPage: React.FC = () => {
     winRateTrendLoading,
     emotionProfit,
     emotionProfitLoading,
+    advancedMetrics,
+    advancedMetricsLoading,
+    profitAttribution,
+    profitAttributionLoading,
+    riskWarnings,
+    riskWarningsLoading,
+    markWarningRead,
+    indexCompare,
+    indexCompareName,
+    indexCompareLoading,
+    fetchIndexCompare,
+    heatmapData,
+    heatmapYear,
+    heatmapLoading,
+    fetchHeatmap,
+    cashFlowData,
+    cashFlowSummary,
+    cashFlowLoading,
     fetchAllData,
   } = useStatisticsStore()
 
@@ -70,14 +94,56 @@ const StatisticsPage: React.FC = () => {
       </div>
 
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        {/* 风险预警 */}
+        {riskWarnings.length > 0 && (
+          <RiskWarningsPanel
+            warnings={riskWarnings}
+            loading={riskWarningsLoading}
+            onMarkRead={markWarningRead}
+          />
+        )}
+
         {/* 核心指标卡片 */}
         <CoreMetricsCard metrics={coreMetrics} loading={coreMetricsLoading} />
+
+        {/* 高级交易指标 */}
+        <AdvancedMetricsCard metrics={advancedMetrics} loading={advancedMetricsLoading} />
 
         {/* 收益曲线图 */}
         <ProfitCurveChart data={profitCurve} loading={profitCurveLoading} />
 
+        {/* 收益对比和热力图 */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={12}>
+            <IndexCompareChart
+              data={indexCompare}
+              indexName={indexCompareName}
+              loading={indexCompareLoading}
+              onIndexChange={fetchIndexCompare}
+            />
+          </Col>
+          <Col xs={24} lg={12}>
+            <TradeHeatmap
+              data={heatmapData}
+              year={heatmapYear}
+              loading={heatmapLoading}
+              onYearChange={fetchHeatmap}
+            />
+          </Col>
+        </Row>
+
+        {/* 资金流向 */}
+        <CashFlowChart
+          data={cashFlowData}
+          summary={cashFlowSummary}
+          loading={cashFlowLoading}
+        />
+
         {/* 月度收益柱状图 */}
         <MonthlyProfitChart data={monthlyProfit} loading={monthlyProfitLoading} />
+
+        {/* 收益归因分析 */}
+        <ProfitAttributionChart data={profitAttribution} loading={profitAttributionLoading} />
 
         {/* 胜率趋势和情绪分析 */}
         <Row gutter={[16, 16]}>

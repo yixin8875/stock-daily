@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import {
   Card, Table, Button, Space, Typography, Tag, message, Modal, Form, Input,
-  InputNumber, Select, Switch, Popconfirm, Empty, Spin
+  InputNumber, Select, Switch, Popconfirm, Empty, Spin, Tabs
 } from 'antd'
-import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons'
+import { PlusOutlined, DeleteOutlined, ReloadOutlined, BellOutlined } from '@ant-design/icons'
 import { alertService, stockService, type PriceAlert, type AlertType, type StockQuote } from '@/services'
+import { SmartStopLoss, PositionSizer, TradeExport, ReminderSettings } from './components'
 
 const { Title, Text } = Typography
 
@@ -13,6 +14,8 @@ const alertTypeLabels: Record<AlertType, string> = {
   STOP_LOSS: '止损',
   PRICE_ABOVE: '价格高于',
   PRICE_BELOW: '价格低于',
+  BREAKOUT: '突破',
+  VOLATILITY: '波动',
 }
 
 const alertTypeColors: Record<AlertType, string> = {
@@ -20,6 +23,8 @@ const alertTypeColors: Record<AlertType, string> = {
   STOP_LOSS: 'green',
   PRICE_ABOVE: 'blue',
   PRICE_BELOW: 'orange',
+  BREAKOUT: 'purple',
+  VOLATILITY: 'magenta',
 }
 
 const AlertPage: React.FC = () => {
@@ -185,31 +190,50 @@ const AlertPage: React.FC = () => {
 
   return (
     <div style={{ padding: '0 0 24px 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>价格提醒</Title>
-        <Space>
-          <Switch
-            checkedChildren="显示已触发"
-            unCheckedChildren="隐藏已触发"
-            checked={includeTriggered}
-            onChange={setIncludeTriggered}
-          />
-          <Button icon={<ReloadOutlined />} onClick={fetchQuotes}>刷新行情</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>添加提醒</Button>
-        </Space>
-      </div>
+      <Title level={3} style={{ marginBottom: 24 }}>
+        <BellOutlined style={{ marginRight: 8 }} />
+        提醒与工具
+      </Title>
 
-      <Card>
-        <Spin spinning={loading}>
-          {alerts.length > 0 ? (
-            <Table columns={columns} dataSource={alerts} rowKey="id" pagination={false} />
-          ) : (
-            <Empty description="暂无价格提醒">
-              <Button type="primary" onClick={handleAdd}>添加提醒</Button>
-            </Empty>
-          )}
-        </Spin>
-      </Card>
+      <Tabs defaultActiveKey="alerts" items={[
+        {
+          key: 'alerts',
+          label: '价格提醒',
+          children: <AlertsTab
+            alerts={alerts}
+            quotes={quotes}
+            loading={loading}
+            includeTriggered={includeTriggered}
+            setIncludeTriggered={setIncludeTriggered}
+            fetchQuotes={fetchQuotes}
+            handleAdd={handleAdd}
+            handleToggle={handleToggle}
+            handleReset={handleReset}
+            handleDelete={handleDelete}
+            columns={columns}
+          />
+        },
+        {
+          key: 'stopLoss',
+          label: '智能止盈止损',
+          children: <SmartStopLoss />
+        },
+        {
+          key: 'position',
+          label: '仓位建议',
+          children: <PositionSizer />
+        },
+        {
+          key: 'export',
+          label: '交易导出',
+          children: <TradeExport />
+        },
+        {
+          key: 'settings',
+          label: '提醒设置',
+          children: <ReminderSettings />
+        },
+      ]} />
 
       <Modal title="添加价格提醒" open={modalVisible} onOk={handleSubmit} onCancel={() => setModalVisible(false)}>
         <Form form={form} layout="vertical">
@@ -238,5 +262,46 @@ const AlertPage: React.FC = () => {
     </div>
   )
 }
+
+// AlertsTab 子组件
+const AlertsTab: React.FC<{
+  alerts: PriceAlert[]
+  quotes: Record<string, StockQuote>
+  loading: boolean
+  includeTriggered: boolean
+  setIncludeTriggered: (v: boolean) => void
+  fetchQuotes: () => void
+  handleAdd: () => void
+  handleToggle: (id: string, enabled: boolean) => void
+  handleReset: (id: string) => void
+  handleDelete: (id: string) => void
+  columns: any[]
+}> = ({ alerts, loading, includeTriggered, setIncludeTriggered, fetchQuotes, handleAdd, columns }) => (
+  <>
+    <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+      <Space>
+        <Switch
+          checkedChildren="显示已触发"
+          unCheckedChildren="隐藏已触发"
+          checked={includeTriggered}
+          onChange={setIncludeTriggered}
+        />
+        <Button icon={<ReloadOutlined />} onClick={fetchQuotes}>刷新</Button>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>添加</Button>
+      </Space>
+    </div>
+    <Card>
+      <Spin spinning={loading}>
+        {alerts.length > 0 ? (
+          <Table columns={columns} dataSource={alerts} rowKey="id" pagination={false} />
+        ) : (
+          <Empty description="暂无价格提醒">
+            <Button type="primary" onClick={handleAdd}>添加提醒</Button>
+          </Empty>
+        )}
+      </Spin>
+    </Card>
+  </>
+)
 
 export default AlertPage
