@@ -281,3 +281,6 @@ export const stockService = {
     })
   },
 }
+
+// 别名导出
+export const stockApi = stockService

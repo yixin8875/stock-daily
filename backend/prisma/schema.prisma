@@ -22,6 +22,7 @@ model User {
   positions   Position[]
   priceAlerts PriceAlert[]
   watchlists  Watchlist[]
+  watchlistGroups WatchlistGroup[]
   earningsCalendars EarningsCalendar[]
   tradeSignals TradeSignal[]
   settings    UserSettings?
@@ -33,6 +34,7 @@ model User {
   simulatedAccount SimulatedAccount?
   costRecords CostRecord[]
   tradingJournals TradingJournal[]
+  strategyTemplates StrategyTemplate[]
 }
 
 // 交易账户模型
@@ -87,6 +89,8 @@ model Diary {
   buyPlans    BuyPlan[]
   sellPlans   SellPlan[]
   stopLosses  StopLoss[]
+
+  @@index([userId, date])
 }
 
 model Trade {
@@ -103,6 +107,9 @@ model Trade {
   createdAt   DateTime       @default(now())
 
   diary Diary @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+
+  @@index([diaryId])
+  @@index([stockCode])
 }
 
 model WatchStock {
@@ -201,6 +208,7 @@ model Watchlist {
   userId      String
   stockCode   String
   stockName   String
+  groupId     String?  // 分组ID
   industry    String?  // 行业板块
   addPrice    Decimal? // 添加时价格
   targetPrice Decimal? // 目标价
@@ -210,9 +218,28 @@ model Watchlist {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user  User            @relation(fields: [userId], references: [id])
+  group WatchlistGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
   @@unique([userId, stockCode])
+  @@index([userId, sortOrder])
+  @@index([userId, groupId])
+}
+
+// 自选股分组
+model WatchlistGroup {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  color     String   @default("#1890FF")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id])
+  watchlists Watchlist[]
+
+  @@unique([userId, name])
   @@index([userId, sortOrder])
 }
 
@@ -498,4 +525,23 @@ model TradingJournal {
 
   @@unique([userId, date])
   @@index([userId])
+}
+
+// 策略模板
+model StrategyTemplate {
+  id          String   @id @default(uuid())
+  userId      String?  // null 表示系统预设
+  name        String
+  description String?
+  category    String   // trend/reversal/breakout/grid
+  params      Json     // 策略参数
+  isPublic    Boolean  @default(false)
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([category])
 }

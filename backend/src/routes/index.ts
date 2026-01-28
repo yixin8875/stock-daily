@@ -32,6 +32,8 @@ import journalRoutes from './journal.routes';
 import marketRoutes from './market.routes';
 import indicatorRoutes from './indicator.routes';
 import importExportRoutes from './importExport.routes';
+import watchlistGroupRoutes from './watchlistGroup.routes';
+import strategyTemplateRoutes from './strategyTemplate.routes';
 import { authMiddleware } from '../middlewares';
 
 const router = Router();
@@ -70,5 +72,7 @@ router.use('/journals', authMiddleware, journalRoutes);
 router.use('/market', marketRoutes);
 router.use('/indicators', indicatorRoutes);
 router.use('/data', importExportRoutes);
+router.use('/watchlist-groups', watchlistGroupRoutes);
+router.use('/strategies', strategyTemplateRoutes);
 
 export default router;
