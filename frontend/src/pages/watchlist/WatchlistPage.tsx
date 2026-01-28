@@ -68,16 +68,25 @@ const WatchlistPage: React.FC = () => {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
+      console.log('提交的表单数据:', values)
+
+      if (!values.stockCode || !values.stockName) {
+        message.error('请先选择股票')
+        return
+      }
+
       if (editingStock) {
         await watchlistService.updateStock(editingStock.id, values)
         message.success('更新成功')
       } else {
-        await watchlistService.addStock(values)
+        const res = await watchlistService.addStock(values)
+        console.log('添加结果:', res)
         message.success('添加成功')
       }
       setModalVisible(false)
       fetchStocks()
     } catch (error) {
+      console.error('操作失败:', error)
       message.error('操作失败')
     }
   }

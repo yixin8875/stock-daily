@@ -29,20 +29,19 @@ import {
   BellOutlined,
   LineChartOutlined,
 } from '@ant-design/icons'
-import { stockService, type StockQuote, type StockSearchResult, type KLineData } from '@/services'
+import { stockService, watchlistService, type StockQuote, type StockSearchResult, type KLineData } from '@/services'
 import { KLineChart } from '@/components'
 import { StockCompare } from './components'
 
 const { Title, Text } = Typography
 
 interface WatchedStock {
+  id: string
   code: string
   name: string
   targetPrice?: number
   alertEnabled: boolean
 }
-
-const STORAGE_KEY = 'stock_watchlist'
 
 const StockQuotesPage: React.FC = () => {
   const [watchlist, setWatchlist] = useState<WatchedStock[]>([])
@@ -60,22 +59,27 @@ const StockQuotesPage: React.FC = () => {
   const [klineLoading, setKlineLoading] = useState(false)
   const [klinePeriod, setKlinePeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily')
 
-  // 从 localStorage 加载自选股
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      try {
-        setWatchlist(JSON.parse(saved))
-      } catch (e) {
-        console.error('Failed to load watchlist:', e)
+  // 从后端加载自选股
+  const fetchWatchlist = async () => {
+    try {
+      const res = await watchlistService.getWatchlist()
+      if (res.data.success && res.data.data) {
+        setWatchlist(res.data.data.map((item: any) => ({
+          id: item.id,
+          code: item.stockCode,
+          name: item.stockName,
+          targetPrice: item.targetPrice,
+          alertEnabled: false,
+        })))
       }
+    } catch (error) {
+      console.error('加载自选股失败:', error)
     }
-  }, [])
+  }
 
-  // 保存自选股到 localStorage
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(watchlist))
-  }, [watchlist])
+    fetchWatchlist()
+  }, [])
 
   // 获取行情
   const fetchQuotes = useCallback(async () => {
@@ -186,40 +190,54 @@ const StockQuotesPage: React.FC = () => {
   }
 
   // 添加自选股
-  const handleAddStock = (stock: StockSearchResult) => {
+  const handleAddStock = async (stock: StockSearchResult) => {
     if (watchlist.some(s => s.code === stock.code)) {
       message.warning('该股票已在自选列表中')
       return
     }
 
-    setWatchlist([...watchlist, {
-      code: stock.code,
-      name: stock.name,
-      alertEnabled: false,
-    }])
-    message.success('添加成功')
-    setSearchModalVisible(false)
-    setSearchKeyword('')
-    setSearchResults([])
+    try {
+      await watchlistService.addStock({
+        stockCode: stock.code,
+        stockName: stock.name,
+      })
+      message.success('添加成功')
+      setSearchModalVisible(false)
+      setSearchKeyword('')
+      setSearchResults([])
+      fetchWatchlist()
+    } catch (error) {
+      message.error('添加失败')
+    }
   }
 
   // 删除自选股
-  const handleRemoveStock = (code: string) => {
-    setWatchlist(watchlist.filter(s => s.code !== code))
-    message.success('删除成功')
+  const handleRemoveStock = async (id: string) => {
+    try {
+      await watchlistService.removeStock(id)
+      message.success('删除成功')
+      fetchWatchlist()
+    } catch (error) {
+      message.error('删除失败')
+    }
   }
 
   // 设置目标价
-  const handleSetTargetPrice = (code: string, price: number | undefined) => {
-    setWatchlist(watchlist.map(s =>
-      s.code === code ? { ...s, targetPrice: price } : s
-    ))
+  const handleSetTargetPrice = async (id: string, price: number | undefined) => {
+    try {
+      await watchlistService.updateStock(id, { targetPrice: price })
+      setWatchlist(watchlist.map(s =>
+        s.id === id ? { ...s, targetPrice: price } : s
+      ))
+    } catch (error) {
+      message.error('更新失败')
+    }
   }
 
   // 切换提醒
-  const handleToggleAlert = (code: string) => {
+  const handleToggleAlert = (id: string) => {
     setWatchlist(watchlist.map(s =>
-      s.code === code ? { ...s, alertEnabled: !s.alertEnabled } : s
+      s.id === id ? { ...s, alertEnabled: !s.alertEnabled } : s
     ))
   }
 
@@ -294,7 +312,7 @@ const StockQuotesPage: React.FC = () => {
           type="number"
           placeholder="设置目标价"
           value={record.targetPrice}
-          onChange={(e) => handleSetTargetPrice(record.code, e.target.value ? parseFloat(e.target.value) : undefined)}
+          onChange={(e) => handleSetTargetPrice(record.id, e.target.value ? parseFloat(e.target.value) : undefined)}
           style={{ width: 100 }}
         />
       ),
@@ -307,7 +325,7 @@ const StockQuotesPage: React.FC = () => {
         <Switch
           size="small"
           checked={record.alertEnabled}
-          onChange={() => handleToggleAlert(record.code)}
+          onChange={() => handleToggleAlert(record.id)}
           disabled={!record.targetPrice}
         />
       ),
@@ -327,7 +345,7 @@ const StockQuotesPage: React.FC = () => {
             type="text"
             danger
             icon={<DeleteOutlined />}
-            onClick={() => handleRemoveStock(record.code)}
+            onClick={() => handleRemoveStock(record.id)}
           />
         </Space>
       ),

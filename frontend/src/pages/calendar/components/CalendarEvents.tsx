@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Calendar, Badge, Modal, Form, Input, DatePicker, Select, Button, List, Tag } from 'antd'
+import { Card, Calendar, Badge, Modal, Form, Input, DatePicker, Select, Button, List, Tag, message } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import dayjs, { Dayjs } from 'dayjs'
-
-interface CalendarEvent {
-  id: string
-  date: string
-  title: string
-  type: 'earnings' | 'dividend' | 'ipo' | 'meeting' | 'custom'
-  description?: string
-}
+import { calendarEventService, type CalendarEvent } from '@/services'
 
 const eventTypes = [
   { label: '财报发布', value: 'earnings', color: 'blue' },
@@ -25,33 +18,48 @@ const CalendarEvents: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [form] = Form.useForm()
 
+  // 从后端加载日历事件
+  const fetchEvents = async () => {
+    try {
+      const res = await calendarEventService.getAll()
+      if (res.data.success && res.data.data) {
+        setEvents(res.data.data)
+      }
+    } catch (error) {
+      console.error('加载日历事件失败:', error)
+    }
+  }
+
   useEffect(() => {
-    const saved = localStorage.getItem('calendarEvents')
-    if (saved) setEvents(JSON.parse(saved))
+    fetchEvents()
   }, [])
 
-  const saveEvents = (newEvents: CalendarEvent[]) => {
-    setEvents(newEvents)
-    localStorage.setItem('calendarEvents', JSON.stringify(newEvents))
-  }
-
-  const handleAdd = () => {
-    form.validateFields().then((values) => {
-      const newEvent: CalendarEvent = {
-        id: Date.now().toString(),
+  const handleAdd = async () => {
+    try {
+      const values = await form.validateFields()
+      await calendarEventService.create({
         date: values.date.format('YYYY-MM-DD'),
         title: values.title,
-        type: values.type,
+        eventType: values.type,
         description: values.description,
-      }
-      saveEvents([...events, newEvent])
+      })
+      message.success('添加成功')
       setModalVisible(false)
       form.resetFields()
-    })
+      fetchEvents()
+    } catch (error) {
+      message.error('添加失败')
+    }
   }
 
-  const handleDelete = (id: string) => {
-    saveEvents(events.filter((e) => e.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      await calendarEventService.delete(id)
+      message.success('删除成功')
+      fetchEvents()
+    } catch (error) {
+      message.error('删除失败')
+    }
   }
 
   const getListData = (value: Dayjs) => {
@@ -64,7 +72,7 @@ const CalendarEvents: React.FC = () => {
     return (
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {listData.slice(0, 2).map((item) => {
-          const typeInfo = eventTypes.find((t) => t.value === item.type)
+          const typeInfo = eventTypes.find((t) => t.value === item.eventType)
           return (
             <li key={item.id}>
               <Badge color={typeInfo?.color} text={item.title} />
@@ -97,7 +105,7 @@ const CalendarEvents: React.FC = () => {
           <List
             dataSource={dayEvents}
             renderItem={(item) => {
-              const typeInfo = eventTypes.find((t) => t.value === item.type)
+              const typeInfo = eventTypes.find((t) => t.value === item.eventType)
               return (
                 <List.Item
                   actions={[<Button type="link" danger onClick={() => handleDelete(item.id)}>删除</Button>]}

@@ -38,6 +38,8 @@ import tradingDashboardRoutes from './tradingDashboard.routes';
 import correlationRoutes from './correlation.routes';
 import behaviorRoutes from './behavior.routes';
 import aiAnalysisRoutes from './aiAnalysis.routes';
+import tradePlanTemplateRoutes from './tradePlanTemplate.routes';
+import tradeReviewTemplateRoutes from './tradeReviewTemplate.routes';
 import { authMiddleware } from '../middlewares';
 
 const router = Router();

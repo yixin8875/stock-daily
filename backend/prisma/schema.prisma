@@ -35,6 +35,8 @@ model User {
   costRecords CostRecord[]
   tradingJournals TradingJournal[]
   strategyTemplates StrategyTemplate[]
+  tradePlanTemplates TradePlanTemplate[]
+  tradeReviewTemplates TradeReviewTemplate[]
 }
 
 // 交易账户模型
@@ -544,4 +546,48 @@ model StrategyTemplate {
 
   @@index([userId])
   @@index([category])
+}
+
+// 独立交易计划
+model TradePlanTemplate {
+  id            String   @id @default(uuid())
+  userId        String
+  stockCode     String
+  stockName     String
+  direction     String   // buy/sell
+  entryPrice    Decimal
+  targetPrice   Decimal
+  stopPrice     Decimal
+  positionSize  Int?     // 计划仓位百分比
+  reason        String?  @db.Text
+  status        String   @default("pending") // pending/executed/cancelled
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, status])
+}
+
+// 交易复盘模板
+model TradeReviewTemplate {
+  id              String   @id @default(uuid())
+  userId          String
+  date            DateTime @db.Date
+  stockCode       String
+  stockName       String
+  tradeType       String   // buy/sell
+  entryReason     String?  @db.Text
+  exitReason      String?  @db.Text
+  marketCondition String?  @db.Text
+  emotionState    Int?     // 1-5
+  lessonsLearned  String?  @db.Text
+  improvement     String?  @db.Text
+  rating          Int      // 1-5
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, date])
 }
