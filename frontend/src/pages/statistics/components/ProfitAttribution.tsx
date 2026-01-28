@@ -21,11 +21,10 @@ const ProfitAttribution: React.FC = () => {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const res = await statisticsService.getStatistics('all')
+      const res = await statisticsService.getSummary('all')
       const stats = res.data.data
-      // 模拟归因数据
       setData({
-        totalProfit: stats?.totalProfit || 0,
+        totalProfit: stats?.coreMetrics?.totalProfit || 0,
         byIndustry: [
           { name: '科技', profit: 5000 },
           { name: '金融', profit: 3000 },

@@ -89,8 +89,8 @@ const TradePlanTemplate: React.FC = () => {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: (v: string, r: TradePlan) => (
-        <Select
+      render: (v: TradePlan['status'], r: TradePlan) => (
+        <Select<TradePlan['status']>
           size="small"
           value={v}
           onChange={(val) => handleStatusChange(r.id, val)}

@@ -4,6 +4,7 @@ import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
 import ReactECharts from 'echarts-for-react'
 import dayjs, { Dayjs } from 'dayjs'
 import { analysisService, type ProfitPoint, type DrawdownInfo } from '@/services'
+import { EquityCurveCompare } from './components'
 
 const { Title, Text } = Typography
 const { RangePicker } = DatePicker
@@ -166,6 +167,10 @@ const ProfitCurvePage: React.FC = () => {
           </Space>
         </Card>
       )}
+
+      <div style={{ marginTop: 16 }}>
+        <EquityCurveCompare />
+      </div>
     </div>
   )
 }

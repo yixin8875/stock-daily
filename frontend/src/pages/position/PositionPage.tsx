@@ -8,6 +8,7 @@ import {
   ArrowUpOutlined, ArrowDownOutlined, ReloadOutlined
 } from '@ant-design/icons'
 import { positionService, stockService, type Position, type StockQuote } from '@/services'
+import { PositionHeatmap } from './components'
 
 const { Title, Text } = Typography
 
@@ -268,6 +269,10 @@ const PositionPage: React.FC = () => {
           )}
         </Spin>
       </Card>
+
+      <div style={{ marginTop: 24 }}>
+        <PositionHeatmap />
+      </div>
 
       <Modal
         title={editingPosition ? '编辑持仓' : '添加持仓'}

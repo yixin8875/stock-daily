@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Tabs, Button, Modal, Form, Input, Tag, Space, Empty, Spin } from 'antd'
+import { Card, Tabs, Button, Modal, Form, Input, Tag, Space, Spin } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { watchlistService, type WatchlistGroup } from '@/services'
 
