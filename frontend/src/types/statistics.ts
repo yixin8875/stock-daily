@@ -322,3 +322,52 @@ export interface TimingAnalysisResponse {
   sellTiming: TimingAnalysisData
   overallScore: number
 }
+
+// 交易错误类型
+export type TradeErrorType = 'CHASE_HIGH' | 'PANIC_SELL' | 'HOLD_LOSS' | 'EARLY_SELL' | 'OVERTRADING' | 'NO_STOP_LOSS'
+
+// 交易错误分析
+export interface TradeError {
+  type: TradeErrorType
+  label: string
+  count: number
+  totalLoss: number
+  examples: TradeErrorExample[]
+  suggestion: string
+}
+
+export interface TradeErrorExample {
+  tradeId: string
+  stockCode: string
+  stockName: string
+  date: string
+  loss: number
+  description: string
+}
+
+export interface TradeErrorResponse {
+  errors: TradeError[]
+  totalErrorCount: number
+  mostCommonError: TradeErrorType
+}
+
+// 最佳/最差交易
+export interface TopTrade {
+  id: string
+  stockCode: string
+  stockName: string
+  buyDate: string
+  sellDate: string
+  buyPrice: number
+  sellPrice: number
+  quantity: number
+  profit: number
+  profitRate: number
+  holdingDays: number
+  strategy?: string
+}
+
+export interface TopTradesResponse {
+  bestTrades: TopTrade[]
+  worstTrades: TopTrade[]
+}

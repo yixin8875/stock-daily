@@ -18,6 +18,9 @@ import {
   IndexCompareChart,
   TradeHeatmap,
   CashFlowChart,
+  ReviewCalendar,
+  HoldingPeriodAnalysis,
+  TimingAnalysis,
 } from './components'
 
 const { Title } = Typography
@@ -171,6 +174,19 @@ const StatisticsPage: React.FC = () => {
 
         {/* 股票交易汇总 */}
         <StockTradesSummary />
+
+        {/* 交易复盘日历 */}
+        <ReviewCalendar />
+
+        {/* 持仓周期和交易时机分析 */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={12}>
+            <HoldingPeriodAnalysis period={period} />
+          </Col>
+          <Col xs={24} lg={12}>
+            <TimingAnalysis period={period} />
+          </Col>
+        </Row>
       </Space>
     </div>
   )

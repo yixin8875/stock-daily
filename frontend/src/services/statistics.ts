@@ -17,6 +17,8 @@ import type {
   ReviewCalendarResponse,
   HoldingPeriodResponse,
   TimingAnalysisResponse,
+  TradeErrorResponse,
+  TopTradesResponse,
 } from '@/types/statistics'
 
 export const statisticsService = {
@@ -125,6 +127,20 @@ export const statisticsService = {
   getTimingAnalysis: (period: StatisticsPeriod) => {
     return request.get<ApiResponse<TimingAnalysisResponse>>('/statistics/timing-analysis', {
       params: { period },
+    })
+  },
+
+  // 获取交易错误分析
+  getTradeErrors: (period: StatisticsPeriod) => {
+    return request.get<ApiResponse<TradeErrorResponse>>('/statistics/trade-errors', {
+      params: { period },
+    })
+  },
+
+  // 获取最佳/最差交易
+  getTopTrades: (period: StatisticsPeriod, limit = 5) => {
+    return request.get<ApiResponse<TopTradesResponse>>('/statistics/top-trades', {
+      params: { period, limit },
     })
   },
 }

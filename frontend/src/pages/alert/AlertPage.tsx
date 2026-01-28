@@ -5,7 +5,7 @@ import {
 } from 'antd'
 import { PlusOutlined, DeleteOutlined, ReloadOutlined, BellOutlined } from '@ant-design/icons'
 import { alertService, stockService, type PriceAlert, type AlertType, type StockQuote } from '@/services'
-import { SmartStopLoss, PositionSizer, TradeExport, ReminderSettings } from './components'
+import { SmartStopLoss, PositionSizer, TradeExport, ReminderSettings, TechnicalIndicatorAlert, VolumeAlert, MAAlert } from './components'
 
 const { Title, Text } = Typography
 
@@ -16,6 +16,10 @@ const alertTypeLabels: Record<AlertType, string> = {
   PRICE_BELOW: '价格低于',
   BREAKOUT: '突破',
   VOLATILITY: '波动',
+  MACD: 'MACD',
+  KDJ: 'KDJ',
+  VOLUME: '成交量',
+  MA: '均线',
 }
 
 const alertTypeColors: Record<AlertType, string> = {
@@ -25,6 +29,10 @@ const alertTypeColors: Record<AlertType, string> = {
   PRICE_BELOW: 'orange',
   BREAKOUT: 'purple',
   VOLATILITY: 'magenta',
+  MACD: 'cyan',
+  KDJ: 'geekblue',
+  VOLUME: 'volcano',
+  MA: 'lime',
 }
 
 const AlertPage: React.FC = () => {
@@ -232,6 +240,21 @@ const AlertPage: React.FC = () => {
           key: 'settings',
           label: '提醒设置',
           children: <ReminderSettings />
+        },
+        {
+          key: 'technical',
+          label: '技术指标',
+          children: <TechnicalIndicatorAlert />
+        },
+        {
+          key: 'volume',
+          label: '成交量异动',
+          children: <VolumeAlert />
+        },
+        {
+          key: 'ma',
+          label: '均线突破',
+          children: <MAAlert />
         },
       ]} />
 

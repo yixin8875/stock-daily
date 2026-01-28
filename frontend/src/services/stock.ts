@@ -40,6 +40,39 @@ export interface StockNews {
   url: string
 }
 
+// 板块数据
+export interface SectorData {
+  code: string
+  name: string
+  change: number
+  changePercent: number
+  leadingStock: string
+  leadingStockChange: number
+  volume: number
+  amount: number
+}
+
+// 板块轮动数据
+export interface SectorRotation {
+  date: string
+  sectors: SectorData[]
+}
+
+// 大盘情绪指标
+export interface MarketSentiment {
+  date: string
+  advanceCount: number
+  declineCount: number
+  flatCount: number
+  advanceDeclineRatio: number
+  limitUpCount: number
+  limitDownCount: number
+  averageChange: number
+  volumeRatio: number
+  sentimentScore: number
+  sentimentLevel: 'extreme_fear' | 'fear' | 'neutral' | 'greed' | 'extreme_greed'
+}
+
 export const stockService = {
   // 获取单只股票行情
   getQuote: (code: string) => {
@@ -71,6 +104,30 @@ export const stockService = {
   getStockNews: (code?: string) => {
     return request.get<ApiResponse<StockNews[]>>('/stocks/news', {
       params: code ? { code } : {},
+    })
+  },
+
+  // 获取板块列表
+  getSectors: () => {
+    return request.get<ApiResponse<SectorData[]>>('/market/sectors')
+  },
+
+  // 获取板块轮动数据
+  getSectorRotation: (days = 5) => {
+    return request.get<ApiResponse<SectorRotation[]>>('/market/sector-rotation', {
+      params: { days },
+    })
+  },
+
+  // 获取大盘情绪指标
+  getMarketSentiment: () => {
+    return request.get<ApiResponse<MarketSentiment>>('/market/sentiment')
+  },
+
+  // 获取历史情绪数据
+  getSentimentHistory: (days = 30) => {
+    return request.get<ApiResponse<MarketSentiment[]>>('/market/sentiment/history', {
+      params: { days },
     })
   },
 }
