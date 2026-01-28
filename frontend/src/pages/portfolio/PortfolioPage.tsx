@@ -11,6 +11,7 @@ import {
 } from '@/services'
 import { useThemeStore } from '@/stores'
 import { getChartTheme, chartColors } from '@/utils/chartTheme'
+import { CorrelationAnalysis, IndustryAdvicePanel, RebalancePanel, RiskAssessment } from './components'
 
 const { Title, Text } = Typography
 
@@ -229,6 +230,7 @@ const PortfolioPage: React.FC = () => {
       {/* 行业分布 */}
       <Card
         title={<><PieChartOutlined style={{ color: '#722ED1', marginRight: 8 }} />行业分布</>}
+        style={{ marginBottom: 24 }}
       >
         <Row gutter={24}>
           <Col xs={24} md={12}>
@@ -264,6 +266,24 @@ const PortfolioPage: React.FC = () => {
           </Col>
         </Row>
       </Card>
+
+      {/* 相关性分析 */}
+      <CorrelationAnalysis />
+
+      {/* 行业配置建议 */}
+      <div style={{ marginTop: 24 }}>
+        <IndustryAdvicePanel />
+      </div>
+
+      {/* 再平衡提醒 */}
+      <div style={{ marginTop: 24 }}>
+        <RebalancePanel />
+      </div>
+
+      {/* 风险评估报告 */}
+      <div style={{ marginTop: 24 }}>
+        <RiskAssessment />
+      </div>
     </div>
   )
 }

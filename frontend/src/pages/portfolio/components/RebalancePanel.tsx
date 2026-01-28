@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Table, Tag, Button, InputNumber, Space, Spin, Empty, message } from 'antd'
+import { Card, Table, Tag, InputNumber, Space, Spin, Empty } from 'antd'
 import { SyncOutlined } from '@ant-design/icons'
 import { portfolioService, type RebalanceItem } from '@/services'
 

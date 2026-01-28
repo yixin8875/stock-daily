@@ -3,7 +3,7 @@ import { Typography, DatePicker, Button, Space, Row, Col, Spin, Empty, message, 
 import { ReloadOutlined, SyncOutlined, CalendarOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import dayjs, { Dayjs } from 'dayjs'
 import type { DailyReview, DeviationTrend } from '@/types/review'
-import { ExecutionMetricsCard, PlanComparisonCard, DeviationChart } from './components'
+import { ExecutionMetricsCard, PlanComparisonCard, DeviationChart, ReviewTemplateManager } from './components'
 import { useThemeStore } from '@/stores'
 import { reviewService } from '@/services/review'
 
@@ -184,6 +184,11 @@ const ReviewPage: React.FC = () => {
           {/* 趋势图 */}
           <Col span={24}>
             <DeviationChart data={trend} />
+          </Col>
+
+          {/* 复盘模板 */}
+          <Col span={24}>
+            <ReviewTemplateManager />
           </Col>
         </Row>
       ) : (

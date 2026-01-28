@@ -22,6 +22,21 @@ export interface WatchlistInput {
   targetPrice?: number
   stopPrice?: number
   notes?: string
+  groupId?: string
+}
+
+// 自选股分组
+export interface WatchlistGroup {
+  id: string
+  name: string
+  color: string
+  stockCount: number
+  createdAt: string
+}
+
+export interface WatchlistGroupInput {
+  name: string
+  color?: string
 }
 
 export const watchlistService = {
@@ -43,5 +58,26 @@ export const watchlistService = {
 
   reorderStocks: (stockIds: string[]) => {
     return request.post<ApiResponse<void>>('/watchlist/reorder', { stockIds })
+  },
+
+  // 分组管理
+  getGroups: () => {
+    return request.get<ApiResponse<WatchlistGroup[]>>('/watchlist/groups')
+  },
+
+  createGroup: (data: WatchlistGroupInput) => {
+    return request.post<ApiResponse<WatchlistGroup>>('/watchlist/groups', data)
+  },
+
+  updateGroup: (id: string, data: WatchlistGroupInput) => {
+    return request.put<ApiResponse<WatchlistGroup>>(`/watchlist/groups/${id}`, data)
+  },
+
+  deleteGroup: (id: string) => {
+    return request.delete<ApiResponse<void>>(`/watchlist/groups/${id}`)
+  },
+
+  getStocksByGroup: (groupId: string) => {
+    return request.get<ApiResponse<WatchlistStock[]>>(`/watchlist/groups/${groupId}/stocks`)
   },
 }

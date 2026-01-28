@@ -58,6 +58,67 @@ export interface SectorRotation {
   sectors: SectorData[]
 }
 
+// 资金流向数据
+export interface MoneyFlow {
+  code: string
+  name: string
+  mainInflow: number
+  mainOutflow: number
+  mainNet: number
+  retailInflow: number
+  retailOutflow: number
+  retailNet: number
+  totalNet: number
+  mainNetRatio: number
+}
+
+// 资金流向历史
+export interface MoneyFlowHistory {
+  date: string
+  mainNet: number
+  retailNet: number
+  totalNet: number
+}
+
+// 股票筛选条件
+export interface StockScreenerParams {
+  minPrice?: number
+  maxPrice?: number
+  minPE?: number
+  maxPE?: number
+  minPB?: number
+  maxPB?: number
+  minMarketCap?: number
+  maxMarketCap?: number
+  minChangePercent?: number
+  maxChangePercent?: number
+  minVolume?: number
+  sectors?: string[]
+}
+
+// 筛选结果
+export interface ScreenerResult {
+  code: string
+  name: string
+  price: number
+  changePercent: number
+  pe: number
+  pb: number
+  marketCap: number
+  volume: number
+  sector: string
+}
+
+// 技术指标
+export interface TechnicalIndicators {
+  code: string
+  macd: { dif: number; dea: number; macd: number }
+  kdj: { k: number; d: number; j: number }
+  rsi: { rsi6: number; rsi12: number; rsi24: number }
+  ma: { ma5: number; ma10: number; ma20: number; ma60: number }
+  boll: { upper: number; middle: number; lower: number }
+}
+
 // 大盘情绪指标
 export interface MarketSentiment {
   date: string
@@ -129,5 +190,29 @@ export const stockService = {
     return request.get<ApiResponse<MarketSentiment[]>>('/market/sentiment/history', {
       params: { days },
     })
+  },
+
+  // 获取资金流向
+  getMoneyFlow: (codes?: string[]) => {
+    return request.get<ApiResponse<MoneyFlow[]>>('/market/money-flow', {
+      params: codes ? { codes: codes.join(',') } : {},
+    })
+  },
+
+  // 获取资金流向历史
+  getMoneyFlowHistory: (code: string, days = 30) => {
+    return request.get<ApiResponse<MoneyFlowHistory[]>>(`/stocks/${code}/money-flow`, {
+      params: { days },
+    })
+  },
+
+  // 股票筛选
+  screenStocks: (params: StockScreenerParams) => {
+    return request.post<ApiResponse<ScreenerResult[]>>('/stocks/screener', params)
+  },
+
+  // 获取技术指标
+  getTechnicalIndicators: (code: string) => {
+    return request.get<ApiResponse<TechnicalIndicators>>(`/stocks/${code}/indicators`)
   },
 }

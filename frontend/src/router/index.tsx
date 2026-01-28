@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { MainLayout, ProtectedRoute } from '@/components'
-import { Home, Login, Register, DiaryList, TodaySummary, TomorrowPlan, HistoryPage, StatisticsPage, TagManagement, SearchPage, DataExport, UserSettings, ReportPage, ReviewPage, AIAnalysisPage, AccountsPage, StockQuotesPage, TradeCalendarPage, NewsPage, BacktestPage, CustomDashboard, ProfitCurvePage, TradeReviewPage, AnalysisReportPage, PositionPage, PositionCalculator, PositionAnalysisPage, AlertPage, WatchlistPage, EarningsPage, SignalPage, MarketPage, ToolsPage } from '@/pages'
+import { Home, Login, Register, DiaryList, TodaySummary, TomorrowPlan, HistoryPage, StatisticsPage, TagManagement, SearchPage, DataExport, UserSettings, ReportPage, ReviewPage, AIAnalysisPage, AccountsPage, StockQuotesPage, TradeCalendarPage, NewsPage, BacktestPage, CustomDashboard, ProfitCurvePage, TradeReviewPage, AnalysisReportPage, PositionPage, PositionCalculator, PositionAnalysisPage, AlertPage, WatchlistPage, EarningsPage, SignalPage, MarketPage, ToolsPage, TradingJournalPage } from '@/pages'
 
 const router = createBrowserRouter([
   {
@@ -140,6 +140,10 @@ const router = createBrowserRouter([
           {
             path: '/tools',
             element: <ToolsPage />,
+          },
+          {
+            path: '/journal',
+            element: <TradingJournalPage />,
           },
         ],
       },
