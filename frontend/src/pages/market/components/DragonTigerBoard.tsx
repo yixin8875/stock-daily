@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { Card, Table, Tag, Tabs, Space, Typography, Row, Col, Statistic, message } from 'antd'
-import { FireOutlined, RiseOutlined, FallOutlined } from '@ant-design/icons'
+import React, { useState, useEffect, useRef } from 'react'
+import { Card, Table, Tag, Tabs, Space, Typography, Row, Col, Statistic, message, Button, Switch } from 'antd'
+import { FireOutlined, RiseOutlined, FallOutlined, ReloadOutlined, DownloadOutlined } from '@ant-design/icons'
 import { stockService, type DragonTigerItem, type InstitutionTrade } from '@/services'
 
 const { Text } = Typography
@@ -10,9 +10,14 @@ const DragonTigerBoard: React.FC = () => {
   const [listData, setListData] = useState<DragonTigerItem[]>([])
   const [institutionData, setInstitutionData] = useState<InstitutionTrade[]>([])
   const [loading, setLoading] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     fetchData()
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
   }, [])
 
   const fetchData = async () => {
@@ -29,6 +34,34 @@ const DragonTigerBoard: React.FC = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    if (autoRefresh) {
+      timerRef.current = setInterval(fetchData, 60000)
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current)
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [autoRefresh])
+
+  const exportToCSV = () => {
+    const headers = ['代码', '名称', '涨跌幅', '上榜原因', '买入(亿)', '卖出(亿)', '净额(亿)']
+    const rows = listData.map(d => [
+      d.code, d.name, d.change.toFixed(2),
+      d.reason, d.buyAmount.toFixed(2),
+      d.sellAmount.toFixed(2), d.netAmount.toFixed(2)
+    ])
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `龙虎榜_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const listColumns = [
@@ -102,7 +135,17 @@ const DragonTigerBoard: React.FC = () => {
   }
 
   return (
-    <Card title="龙虎榜数据">
+    <Card
+      title="龙虎榜数据"
+      extra={
+        <Space>
+          <span>自动刷新</span>
+          <Switch size="small" checked={autoRefresh} onChange={setAutoRefresh} />
+          <Button icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>刷新</Button>
+          <Button icon={<DownloadOutlined />} onClick={exportToCSV}>导出</Button>
+        </Space>
+      }
+    >
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={6}>
           <Statistic title="上榜股票" value={stats.total} suffix="只" />

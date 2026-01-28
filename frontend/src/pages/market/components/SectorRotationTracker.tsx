@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { Card, Table, Tag, Space, Select, Row, Col, Statistic, Tooltip, message } from 'antd'
-import { ArrowUpOutlined, ArrowDownOutlined, FireOutlined } from '@ant-design/icons'
+import React, { useState, useEffect, useRef } from 'react'
+import { Card, Table, Tag, Space, Select, Row, Col, Statistic, Tooltip, message, Button, Switch } from 'antd'
+import { ArrowUpOutlined, ArrowDownOutlined, FireOutlined, ReloadOutlined, DownloadOutlined } from '@ant-design/icons'
 import ReactECharts from 'echarts-for-react'
 import { stockService } from '@/services'
 
@@ -20,9 +20,14 @@ const SectorRotationTracker: React.FC = () => {
   const [period, setPeriod] = useState<'1d' | '5d' | '20d'>('1d')
   const [sectors, setSectors] = useState<SectorData[]>([])
   const [loading, setLoading] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     fetchSectorData()
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
   }, [period])
 
   const fetchSectorData = async () => {
@@ -51,6 +56,32 @@ const SectorRotationTracker: React.FC = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    if (autoRefresh) {
+      timerRef.current = setInterval(fetchSectorData, 60000)
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current)
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [autoRefresh])
+
+  const exportToCSV = () => {
+    const headers = ['排名', '板块', '涨跌幅', '领涨股', '热度']
+    const rows = sectors.map(s => [
+      s.rank, s.name, s.change.toFixed(2), s.leadingStock, s.hotLevel
+    ])
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `板块轮动_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const columns = [
@@ -129,11 +160,17 @@ const SectorRotationTracker: React.FC = () => {
     <Card
       title="板块轮动追踪"
       extra={
-        <Select value={period} onChange={setPeriod} style={{ width: 100 }}>
-          <Select.Option value="1d">今日</Select.Option>
-          <Select.Option value="5d">5日</Select.Option>
-          <Select.Option value="20d">20日</Select.Option>
-        </Select>
+        <Space>
+          <Select value={period} onChange={setPeriod} style={{ width: 100 }}>
+            <Select.Option value="1d">今日</Select.Option>
+            <Select.Option value="5d">5日</Select.Option>
+            <Select.Option value="20d">20日</Select.Option>
+          </Select>
+          <span>自动刷新</span>
+          <Switch size="small" checked={autoRefresh} onChange={setAutoRefresh} />
+          <Button icon={<ReloadOutlined />} onClick={fetchSectorData} loading={loading} />
+          <Button icon={<DownloadOutlined />} onClick={exportToCSV} />
+        </Space>
       }
     >
       <Row gutter={16} style={{ marginBottom: 16 }}>

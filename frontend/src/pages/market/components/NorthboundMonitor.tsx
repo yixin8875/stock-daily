@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { Card, Row, Col, Statistic, Table, Tag, Select, message } from 'antd'
-import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
+import React, { useState, useEffect, useRef } from 'react'
+import { Card, Row, Col, Statistic, Table, Tag, Select, message, Button, Switch, Space } from 'antd'
+import { ArrowUpOutlined, ArrowDownOutlined, ReloadOutlined, DownloadOutlined } from '@ant-design/icons'
 import ReactECharts from 'echarts-for-react'
 import { stockService, type NorthFlowData, type NorthTopStock } from '@/services'
 
@@ -9,9 +9,14 @@ const NorthboundMonitor: React.FC = () => {
   const [flowData, setFlowData] = useState<NorthFlowData[]>([])
   const [topStocks, setTopStocks] = useState<NorthTopStock[]>([])
   const [loading, setLoading] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     fetchData()
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
   }, [period])
 
   const fetchData = async () => {
@@ -29,6 +34,30 @@ const NorthboundMonitor: React.FC = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    if (autoRefresh) {
+      timerRef.current = setInterval(fetchData, 60000)
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current)
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [autoRefresh])
+
+  const exportToCSV = () => {
+    const headers = ['日期', '沪股通(亿)', '深股通(亿)', '合计(亿)']
+    const rows = flowData.map(d => [d.date, d.shConnect, d.szConnect, d.total])
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `北向资金_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const todayData = flowData[flowData.length - 1] || { shConnect: 0, szConnect: 0, total: 0 }
@@ -72,11 +101,17 @@ const NorthboundMonitor: React.FC = () => {
     <Card
       title="北向资金监控"
       extra={
-        <Select value={period} onChange={setPeriod} style={{ width: 100 }}>
-          <Select.Option value="1d">今日</Select.Option>
-          <Select.Option value="5d">5日</Select.Option>
-          <Select.Option value="20d">20日</Select.Option>
-        </Select>
+        <Space>
+          <Select value={period} onChange={setPeriod} style={{ width: 100 }}>
+            <Select.Option value="1d">今日</Select.Option>
+            <Select.Option value="5d">5日</Select.Option>
+            <Select.Option value="20d">20日</Select.Option>
+          </Select>
+          <span>自动刷新</span>
+          <Switch size="small" checked={autoRefresh} onChange={setAutoRefresh} />
+          <Button icon={<ReloadOutlined />} onClick={fetchData} loading={loading} />
+          <Button icon={<DownloadOutlined />} onClick={exportToCSV} />
+        </Space>
       }
     >
       <Row gutter={16} style={{ marginBottom: 16 }}>
