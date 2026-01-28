@@ -24,4 +24,10 @@ router.get('/sectors', MarketController.getSectors);
 // 板块轮动
 router.get('/sector-rotation', MarketController.getSectorRotation);
 
+// 市场情绪
+router.get('/sentiment', MarketController.getMarketSentiment);
+
+// 资金流向
+router.get('/money-flow', MarketController.getMoneyFlow);
+
 export default router;

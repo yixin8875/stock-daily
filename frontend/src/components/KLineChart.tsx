@@ -7,6 +7,9 @@ interface KLineChartProps {
   height?: number
   showMA?: boolean
   showMACD?: boolean
+  showKDJ?: boolean
+  showRSI?: boolean
+  showBOLL?: boolean
   showVolume?: boolean
   maParams?: number[]
 }
@@ -60,11 +63,78 @@ const calculateMACD = (data: KLineData[]) => {
   return { dif, dea, macd }
 }
 
+// 计算KDJ
+const calculateKDJ = (data: KLineData[], n: number = 9) => {
+  const k: number[] = []
+  const d: number[] = []
+  const j: number[] = []
+  let prevK = 50, prevD = 50
+
+  for (let i = 0; i < data.length; i++) {
+    if (i < n - 1) {
+      k.push(50); d.push(50); j.push(50)
+      continue
+    }
+    const slice = data.slice(i - n + 1, i + 1)
+    const low = Math.min(...slice.map(s => s.low))
+    const high = Math.max(...slice.map(s => s.high))
+    const rsv = high === low ? 50 : ((data[i].close - low) / (high - low)) * 100
+    const newK = (2 / 3) * prevK + (1 / 3) * rsv
+    const newD = (2 / 3) * prevD + (1 / 3) * newK
+    k.push(Math.round(newK * 100) / 100)
+    d.push(Math.round(newD * 100) / 100)
+    j.push(Math.round((3 * newK - 2 * newD) * 100) / 100)
+    prevK = newK; prevD = newD
+  }
+  return { k, d, j }
+}
+
+// 计算RSI
+const calculateRSI = (data: KLineData[], period: number = 14) => {
+  const rsi: (number | null)[] = []
+  for (let i = 0; i < data.length; i++) {
+    if (i < period) { rsi.push(null); continue }
+    let gains = 0, losses = 0
+    for (let j = i - period + 1; j <= i; j++) {
+      const change = data[j].close - data[j - 1].close
+      if (change > 0) gains += change
+      else losses += Math.abs(change)
+    }
+    const avgGain = gains / period
+    const avgLoss = losses / period
+    const rs = avgLoss === 0 ? 100 : avgGain / avgLoss
+    rsi.push(Math.round((100 - 100 / (1 + rs)) * 100) / 100)
+  }
+  return rsi
+}
+
+// 计算布林带
+const calculateBOLL = (data: KLineData[], n: number = 20, k: number = 2) => {
+  const upper: (number | null)[] = []
+  const mid: (number | null)[] = []
+  const lower: (number | null)[] = []
+
+  for (let i = 0; i < data.length; i++) {
+    if (i < n - 1) { upper.push(null); mid.push(null); lower.push(null); continue }
+    const slice = data.slice(i - n + 1, i + 1).map(d => d.close)
+    const ma = slice.reduce((a, b) => a + b, 0) / n
+    const variance = slice.reduce((sum, val) => sum + Math.pow(val - ma, 2), 0) / n
+    const std = Math.sqrt(variance)
+    mid.push(Math.round(ma * 100) / 100)
+    upper.push(Math.round((ma + k * std) * 100) / 100)
+    lower.push(Math.round((ma - k * std) * 100) / 100)
+  }
+  return { upper, mid, lower }
+}
+
 const KLineChart: React.FC<KLineChartProps> = ({
   data,
   height = 500,
   showMA = true,
   showMACD = true,
+  showKDJ = false,
+  showRSI = false,
+  showBOLL = false,
   showVolume = true,
   maParams = [5, 10, 20],
 }) => {
@@ -86,10 +156,12 @@ const KLineChart: React.FC<KLineChartProps> = ({
     const maColors = ['#FF9800', '#2196F3', '#9C27B0']
     const maData = showMA ? maParams.map(p => calculateMA(data, p)) : []
     const macdData = showMACD ? calculateMACD(data) : null
+    const bollData = showBOLL ? calculateBOLL(data) : null
 
     // 构建legend
     const legendData = ['K线']
     if (showMA) maParams.forEach(p => legendData.push(`MA${p}`))
+    if (showBOLL) legendData.push('BOLL上轨', 'BOLL中轨', 'BOLL下轨')
     if (showVolume) legendData.push('成交量')
     if (showMACD) legendData.push('DIF', 'DEA', 'MACD')
 
@@ -141,6 +213,15 @@ const KLineChart: React.FC<KLineChartProps> = ({
           itemStyle: { color: maColors[i % maColors.length] },
         })
       })
+    }
+
+    // 布林带
+    if (showBOLL && bollData) {
+      series.push(
+        { name: 'BOLL上轨', type: 'line', data: bollData.upper, symbol: 'none', lineStyle: { width: 1, type: 'dashed' }, itemStyle: { color: '#E91E63' } },
+        { name: 'BOLL中轨', type: 'line', data: bollData.mid, symbol: 'none', lineStyle: { width: 1 }, itemStyle: { color: '#9C27B0' } },
+        { name: 'BOLL下轨', type: 'line', data: bollData.lower, symbol: 'none', lineStyle: { width: 1, type: 'dashed' }, itemStyle: { color: '#E91E63' } }
+      )
     }
 
     // 成交量
@@ -268,7 +349,7 @@ const KLineChart: React.FC<KLineChartProps> = ({
     }
 
     chartInstance.current.setOption(option, true)
-  }, [data, showMA, showMACD, showVolume, maParams])
+  }, [data, showMA, showMACD, showKDJ, showRSI, showBOLL, showVolume, maParams])
 
   useEffect(() => {
     const handleResize = () => chartInstance.current?.resize()

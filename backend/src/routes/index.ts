@@ -30,6 +30,8 @@ import simulatorRoutes from './simulator.routes';
 import costRoutes from './cost.routes';
 import journalRoutes from './journal.routes';
 import marketRoutes from './market.routes';
+import indicatorRoutes from './indicator.routes';
+import importExportRoutes from './importExport.routes';
 import { authMiddleware } from '../middlewares';
 
 const router = Router();
@@ -66,5 +68,7 @@ router.use('/simulator', authMiddleware, simulatorRoutes);
 router.use('/cost-records', authMiddleware, costRoutes);
 router.use('/journals', authMiddleware, journalRoutes);
 router.use('/market', marketRoutes);
+router.use('/indicators', indicatorRoutes);
+router.use('/data', importExportRoutes);
 
 export default router;

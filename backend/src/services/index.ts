@@ -20,3 +20,5 @@ export { calendarEventService } from './calendarEvent.service';
 export { simulatorService } from './simulator.service';
 export { costService } from './cost.service';
 export { journalService } from './journal.service';
+export { MarketService } from './market.service';
+export { IndicatorService } from './indicator.service';

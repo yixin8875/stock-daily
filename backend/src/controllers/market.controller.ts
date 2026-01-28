@@ -78,4 +78,29 @@ export class MarketController {
       res.status(500).json({ success: false, message: '获取板块轮动数据失败' });
     }
   }
+
+  /**
+   * 获取市场情绪指标
+   */
+  static async getMarketSentiment(req: Request, res: Response) {
+    try {
+      const data = await MarketService.getMarketSentiment();
+      res.json({ success: true, data });
+    } catch (error) {
+      res.status(500).json({ success: false, message: '获取市场情绪失败' });
+    }
+  }
+
+  /**
+   * 获取资金流向数据
+   */
+  static async getMoneyFlow(req: Request, res: Response) {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const data = await MarketService.getMoneyFlow(limit);
+      res.json({ success: true, data });
+    } catch (error) {
+      res.status(500).json({ success: false, message: '获取资金流向失败' });
+    }
+  }
 }

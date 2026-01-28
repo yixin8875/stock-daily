@@ -55,6 +55,30 @@ export interface SectorRotation {
   sectors: SectorData[];
 }
 
+// 市场情绪数据接口
+export interface MarketSentiment {
+  date: string;
+  advanceCount: number;
+  declineCount: number;
+  flatCount: number;
+  limitUpCount: number;
+  limitDownCount: number;
+  averageChange: number;
+  sentimentScore: number;
+  sentimentLevel: string;
+}
+
+// 资金流向数据接口
+export interface MoneyFlow {
+  code: string;
+  name: string;
+  mainInflow: number;
+  mainOutflow: number;
+  mainNet: number;
+  retailNet: number;
+  totalNet: number;
+}
+
 export class MarketService {
   /**
    * 获取龙虎榜数据（东方财富）
@@ -250,6 +274,103 @@ export class MarketService {
       }];
     } catch (error) {
       console.error('Failed to fetch sector rotation:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 获取市场情绪指标
+   */
+  static async getMarketSentiment(): Promise<MarketSentiment | null> {
+    try {
+      const url = 'https://push2.eastmoney.com/api/qt/ulist.np/get';
+      const response = await axios.get(url, {
+        params: {
+          fltt: 2,
+          fields: 'f3',
+          fs: 'm:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23',
+        },
+      });
+
+      const data = response.data;
+      if (data.data?.diff) {
+        const stocks = data.data.diff;
+        let advance = 0, decline = 0, flat = 0;
+        let limitUp = 0, limitDown = 0;
+        let totalChange = 0;
+
+        stocks.forEach((s: { f3: number }) => {
+          const change = s.f3 / 100;
+          totalChange += change;
+          if (change > 9.9) limitUp++;
+          else if (change < -9.9) limitDown++;
+          if (change > 0) advance++;
+          else if (change < 0) decline++;
+          else flat++;
+        });
+
+        const avgChange = totalChange / stocks.length;
+        const ratio = advance / (decline || 1);
+        let score = 50 + (ratio - 1) * 10 + avgChange * 5;
+        score = Math.max(0, Math.min(100, score));
+
+        let level = 'neutral';
+        if (score >= 80) level = 'extreme_greed';
+        else if (score >= 60) level = 'greed';
+        else if (score <= 20) level = 'extreme_fear';
+        else if (score <= 40) level = 'fear';
+
+        return {
+          date: new Date().toISOString().split('T')[0],
+          advanceCount: advance,
+          declineCount: decline,
+          flatCount: flat,
+          limitUpCount: limitUp,
+          limitDownCount: limitDown,
+          averageChange: Math.round(avgChange * 100) / 100,
+          sentimentScore: Math.round(score),
+          sentimentLevel: level,
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to fetch market sentiment:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 获取资金流向数据
+   */
+  static async getMoneyFlow(limit: number = 20): Promise<MoneyFlow[]> {
+    try {
+      const url = 'https://push2.eastmoney.com/api/qt/clist/get';
+      const response = await axios.get(url, {
+        params: {
+          pn: 1,
+          pz: limit,
+          fs: 'm:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23',
+          fields: 'f12,f14,f62,f66,f69,f72,f184',
+          fid: 'f62',
+          po: 1,
+        },
+      });
+
+      const data = response.data;
+      if (data.data?.diff) {
+        return data.data.diff.map((item: any) => ({
+          code: item.f12,
+          name: item.f14,
+          mainInflow: (item.f66 || 0) / 100000000,
+          mainOutflow: (item.f72 || 0) / 100000000,
+          mainNet: (item.f62 || 0) / 100000000,
+          retailNet: (item.f69 || 0) / 100000000,
+          totalNet: ((item.f62 || 0) + (item.f69 || 0)) / 100000000,
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch money flow:', error);
       return [];
     }
   }
