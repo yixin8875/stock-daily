@@ -21,6 +21,15 @@ import watchlistRoutes from './watchlist.routes';
 import earningsRoutes from './earnings.routes';
 import signalRoutes from './signal.routes';
 import portfolioRoutes from './portfolio.routes';
+import settingsRoutes from './settings.routes';
+import goalRoutes from './goal.routes';
+import noteRoutes from './note.routes';
+import dividendRoutes from './dividend.routes';
+import calendarEventRoutes from './calendarEvent.routes';
+import simulatorRoutes from './simulator.routes';
+import costRoutes from './cost.routes';
+import journalRoutes from './journal.routes';
+import { authMiddleware } from '../middlewares';
 
 const router = Router();
 
@@ -47,5 +56,13 @@ router.use('/watchlist', watchlistRoutes);
 router.use('/earnings', earningsRoutes);
 router.use('/signals', signalRoutes);
 router.use('/portfolio', portfolioRoutes);
+router.use('/settings', authMiddleware, settingsRoutes);
+router.use('/goals', authMiddleware, goalRoutes);
+router.use('/notes', authMiddleware, noteRoutes);
+router.use('/dividends', authMiddleware, dividendRoutes);
+router.use('/calendar-events', authMiddleware, calendarEventRoutes);
+router.use('/simulator', authMiddleware, simulatorRoutes);
+router.use('/cost-records', authMiddleware, costRoutes);
+router.use('/journals', authMiddleware, journalRoutes);
 
 export default router;

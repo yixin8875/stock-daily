@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, Form, InputNumber, Button, Table, Row, Col, Statistic, Alert } from 'antd'
 import { CalculatorOutlined } from '@ant-design/icons'
 
@@ -10,10 +10,29 @@ interface GridLevel {
   amount: number
 }
 
+const STORAGE_KEY = 'grid_calculator_data'
+
 const GridCalculator: React.FC = () => {
   const [form] = Form.useForm()
   const [gridLevels, setGridLevels] = useState<GridLevel[]>([])
   const [summary, setSummary] = useState<{ totalAmount: number; avgPrice: number; gridCount: number } | null>(null)
+
+  // 从 localStorage 加载数据
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      try {
+        const data = JSON.parse(saved)
+        if (data.formValues) {
+          form.setFieldsValue(data.formValues)
+        }
+        if (data.gridLevels) setGridLevels(data.gridLevels)
+        if (data.summary) setSummary(data.summary)
+      } catch (e) {
+        console.error('Failed to load grid calculator data:', e)
+      }
+    }
+  }, [form])
 
   const handleCalculate = (values: {
     basePrice: number
@@ -39,12 +58,21 @@ const GridCalculator: React.FC = () => {
       })
     }
 
-    setGridLevels(levels)
-    setSummary({
+    const newSummary = {
       totalAmount: levels.reduce((sum, l) => sum + l.amount, 0),
       avgPrice: basePrice,
       gridCount,
-    })
+    }
+
+    setGridLevels(levels)
+    setSummary(newSummary)
+
+    // 保存到 localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      formValues: values,
+      gridLevels: levels,
+      summary: newSummary,
+    }))
   }
 
   const columns = [

@@ -1,33 +1,65 @@
-import React, { useState } from 'react'
-import { Card, Form, InputNumber, Button, Table, Space, Row, Col, Statistic } from 'antd'
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
-
-interface TradeRecord {
-  id: number
-  type: 'buy' | 'sell'
-  price: number
-  quantity: number
-}
+import React, { useState, useEffect } from 'react'
+import { Card, Form, InputNumber, Button, Table, Space, Row, Col, Statistic, message, Spin } from 'antd'
+import { PlusOutlined, DeleteOutlined, ClearOutlined } from '@ant-design/icons'
+import { costService, type CostRecord } from '@/services'
 
 const CostCalculator: React.FC = () => {
-  const [records, setRecords] = useState<TradeRecord[]>([])
+  const [records, setRecords] = useState<CostRecord[]>([])
+  const [loading, setLoading] = useState(false)
   const [form] = Form.useForm()
-  const [idCounter, setIdCounter] = useState(1)
 
-  const handleAdd = (type: 'buy' | 'sell') => {
+  const fetchRecords = async () => {
+    setLoading(true)
+    try {
+      const res = await costService.getAll()
+      setRecords(res.data.data || [])
+    } catch {
+      message.error('获取记录失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchRecords()
+  }, [])
+
+  const handleAdd = async (type: 'buy' | 'sell') => {
     const values = form.getFieldsValue()
     if (!values.price || !values.quantity) return
 
-    setRecords([
-      ...records,
-      { id: idCounter, type, price: values.price, quantity: values.quantity },
-    ])
-    setIdCounter(idCounter + 1)
-    form.resetFields()
+    try {
+      await costService.add({
+        tradeType: type,
+        price: values.price,
+        quantity: values.quantity,
+      })
+      message.success('添加成功')
+      form.resetFields()
+      fetchRecords()
+    } catch {
+      message.error('添加失败')
+    }
   }
 
-  const handleDelete = (id: number) => {
-    setRecords(records.filter((r) => r.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      await costService.delete(id)
+      message.success('删除成功')
+      fetchRecords()
+    } catch {
+      message.error('删除失败')
+    }
+  }
+
+  const handleClear = async () => {
+    try {
+      await costService.clear()
+      message.success('清空成功')
+      setRecords([])
+    } catch {
+      message.error('清空失败')
+    }
   }
 
   const calculate = () => {
@@ -35,7 +67,7 @@ const CostCalculator: React.FC = () => {
     let totalCost = 0
 
     records.forEach((r) => {
-      if (r.type === 'buy') {
+      if (r.tradeType === 'buy') {
         totalShares += r.quantity
         totalCost += r.price * r.quantity
       } else {
@@ -53,8 +85,8 @@ const CostCalculator: React.FC = () => {
   const columns = [
     {
       title: '类型',
-      dataIndex: 'type',
-      key: 'type',
+      dataIndex: 'tradeType',
+      key: 'tradeType',
       render: (v: string) => (
         <span style={{ color: v === 'buy' ? '#cf1322' : '#3f8600' }}>
           {v === 'buy' ? '买入' : '卖出'}
@@ -66,19 +98,20 @@ const CostCalculator: React.FC = () => {
     {
       title: '金额',
       key: 'amount',
-      render: (_: unknown, r: TradeRecord) => (r.price * r.quantity).toFixed(2),
+      render: (_: unknown, r: CostRecord) => (r.price * r.quantity).toFixed(2),
     },
     {
       title: '操作',
       key: 'action',
-      render: (_: unknown, r: TradeRecord) => (
+      render: (_: unknown, r: CostRecord) => (
         <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(r.id)} />
       ),
     },
   ]
 
   return (
-    <Card title="持仓成本计算器">
+    <Card title="持仓成本计算器" extra={<Button icon={<ClearOutlined />} onClick={handleClear}>清空</Button>}>
+      <Spin spinning={loading}>
       <Form form={form} layout="inline" style={{ marginBottom: 16 }}>
         <Form.Item name="price" label="价格">
           <InputNumber min={0} precision={2} placeholder="成交价" style={{ width: 120 }} />
@@ -116,6 +149,7 @@ const CostCalculator: React.FC = () => {
           />
         </Col>
       </Row>
+      </Spin>
     </Card>
   )
 }

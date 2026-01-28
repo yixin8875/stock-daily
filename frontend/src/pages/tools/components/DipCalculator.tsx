@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, Form, InputNumber, Button, Row, Col, Statistic, Alert } from 'antd'
 import type { FormInstance } from 'antd'
 import { FundOutlined } from '@ant-design/icons'
@@ -67,9 +67,25 @@ const DipResultDisplay: React.FC<{ result: DipResult }> = ({ result }) => {
   )
 }
 
+const STORAGE_KEY = 'dip_calculator_data'
+
 const DipCalculator: React.FC = () => {
   const [form] = Form.useForm()
   const [result, setResult] = useState<DipResult | null>(null)
+
+  // 从 localStorage 加载数据
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      try {
+        const data = JSON.parse(saved)
+        if (data.formValues) form.setFieldsValue(data.formValues)
+        if (data.result) setResult(data.result)
+      } catch (e) {
+        console.error('Failed to load dip calculator data:', e)
+      }
+    }
+  }, [form])
 
   const handleCalculate = (values: {
     monthlyAmount: number
@@ -106,7 +122,7 @@ const DipCalculator: React.FC = () => {
     const profitRate = (profit / totalInvested) * 100
     const annualizedReturn = (Math.pow(finalValue / totalInvested, 12 / months) - 1) * 100
 
-    setResult({
+    const newResult = {
       totalInvested,
       finalValue,
       totalShares,
@@ -115,7 +131,15 @@ const DipCalculator: React.FC = () => {
       profitRate,
       annualizedReturn,
       monthlyData,
-    })
+    }
+
+    setResult(newResult)
+
+    // 保存到 localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      formValues: values,
+      result: newResult,
+    }))
   }
 
   return (

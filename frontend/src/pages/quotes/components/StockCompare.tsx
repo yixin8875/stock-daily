@@ -1,12 +1,32 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, Input, Button, Table, Space, Spin, Empty } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import { stockService, type StockQuote } from '@/services'
+
+const STORAGE_KEY = 'stock_compare_codes'
 
 const StockCompare: React.FC = () => {
   const [stocks, setStocks] = useState<StockQuote[]>([])
   const [loading, setLoading] = useState(false)
   const [code, setCode] = useState('')
+
+  // 从 localStorage 加载保存的股票代码并获取行情
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      try {
+        const codes = JSON.parse(saved) as string[]
+        if (codes.length > 0) {
+          setLoading(true)
+          stockService.getQuotes(codes).then(res => {
+            if (res.data.data) setStocks(res.data.data)
+          }).finally(() => setLoading(false))
+        }
+      } catch (e) {
+        console.error('Failed to load compare stocks:', e)
+      }
+    }
+  }, [])
 
   const handleAdd = async () => {
     if (!code.trim() || stocks.find(s => s.code === code)) return
@@ -14,7 +34,9 @@ const StockCompare: React.FC = () => {
     try {
       const res = await stockService.getQuote(code.trim())
       if (res.data.data) {
-        setStocks([...stocks, res.data.data])
+        const newStocks = [...stocks, res.data.data]
+        setStocks(newStocks)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newStocks.map(s => s.code)))
       }
     } catch { /* ignore */ }
     finally {
@@ -24,7 +46,9 @@ const StockCompare: React.FC = () => {
   }
 
   const handleRemove = (c: string) => {
-    setStocks(stocks.filter(s => s.code !== c))
+    const newStocks = stocks.filter(s => s.code !== c)
+    setStocks(newStocks)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newStocks.map(s => s.code)))
   }
 
   const columns = [

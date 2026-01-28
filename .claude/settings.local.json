@@ -33,7 +33,8 @@
       "Bash(pnpm add echarts echarts-for-react react-grid-layout dayjs)",
       "Bash(pnpm add -D @types/react-grid-layout)",
       "Bash(pnpm add react-resizable)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(xargs:*)"
     ]
   }
 }

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Typography, Space } from 'antd'
 import { StockOutlined } from '@ant-design/icons'
-import { SectorRotationAnalysis, MarketSentimentPanel, MoneyFlowPanel, StockScreener, MarketBreadthPanel } from './components'
+import { SectorRotationAnalysis, MarketSentimentPanel, MoneyFlowPanel, StockScreener, MarketBreadthPanel, SectorRotationTracker, NorthboundMonitor, DragonTigerBoard } from './components'
 
 const { Title } = Typography
 
@@ -16,7 +16,10 @@ const MarketPage: React.FC = () => {
         <MarketSentimentPanel />
         <MarketBreadthPanel />
         <MoneyFlowPanel />
+        <NorthboundMonitor />
         <SectorRotationAnalysis />
+        <SectorRotationTracker />
+        <DragonTigerBoard />
         <StockScreener />
       </Space>
     </div>

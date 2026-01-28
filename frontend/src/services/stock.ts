@@ -109,6 +109,43 @@ export interface ScreenerResult {
   sector: string
 }
 
+// 龙虎榜数据
+export interface DragonTigerItem {
+  code: string
+  name: string
+  change: number
+  reason: string
+  buyAmount: number
+  sellAmount: number
+  netAmount: number
+}
+
+// 机构交易数据
+export interface InstitutionTrade {
+  code: string
+  name: string
+  direction: 'buy' | 'sell'
+  amount: number
+  seats: number
+}
+
+// 北向资金流入数据
+export interface NorthFlowData {
+  date: string
+  shConnect: number
+  szConnect: number
+  total: number
+}
+
+// 北向资金买入股票
+export interface NorthTopStock {
+  rank: number
+  code: string
+  name: string
+  netBuy: number
+  change: number
+}
+
 // 技术指标
 export interface TechnicalIndicators {
   code: string
@@ -214,5 +251,33 @@ export const stockService = {
   // 获取技术指标
   getTechnicalIndicators: (code: string) => {
     return request.get<ApiResponse<TechnicalIndicators>>(`/stocks/${code}/indicators`)
+  },
+
+  // 获取龙虎榜数据
+  getDragonTiger: (date?: string) => {
+    return request.get<ApiResponse<DragonTigerItem[]>>('/market/dragon-tiger', {
+      params: date ? { date } : {},
+    })
+  },
+
+  // 获取机构交易数据
+  getInstitutionTrades: (date?: string) => {
+    return request.get<ApiResponse<InstitutionTrade[]>>('/market/institution-trades', {
+      params: date ? { date } : {},
+    })
+  },
+
+  // 获取北向资金流入数据
+  getNorthFlow: (days = 10) => {
+    return request.get<ApiResponse<NorthFlowData[]>>('/market/north-flow', {
+      params: { days },
+    })
+  },
+
+  // 获取北向资金买入TOP股票
+  getNorthTopStocks: (limit = 10) => {
+    return request.get<ApiResponse<NorthTopStock[]>>('/market/north-top-stocks', {
+      params: { limit },
+    })
   },
 }

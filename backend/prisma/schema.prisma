@@ -24,6 +24,15 @@ model User {
   watchlists  Watchlist[]
   earningsCalendars EarningsCalendar[]
   tradeSignals TradeSignal[]
+  settings    UserSettings?
+  goals       InvestmentGoal[]
+  learningNotes LearningNote[]
+  dividendRecords DividendRecord[]
+  calendarEvents CalendarEvent[]
+  simulatedTrades SimulatedTrade[]
+  simulatedAccount SimulatedAccount?
+  costRecords CostRecord[]
+  tradingJournals TradingJournal[]
 }
 
 // 交易账户模型
@@ -339,4 +348,154 @@ enum TagCategory {
   SECTOR     // 板块标签
   REFLECTION // 反思标签
   CUSTOM     // 自定义
+}
+
+// 用户设置
+model UserSettings {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  dashboardLayout Json?    // 仪表盘布局
+  screenFilters   Json?    // 股票筛选条件
+  compareStocks   String[] // 对比股票代码
+  gridCalculator  Json?    // 网格计算器数据
+  dipCalculator   Json?    // 定投计算器数据
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// 投资目标
+model InvestmentGoal {
+  id          String   @id @default(uuid())
+  userId      String
+  title       String
+  targetValue Decimal
+  currentValue Decimal @default(0)
+  deadline    DateTime?
+  category    String   // profit/asset/winrate/trades
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// 学习笔记
+model LearningNote {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  content   String
+  category  String   // technical/fundamental/psychology/strategy
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, category])
+}
+
+// 分红记录
+model DividendRecord {
+  id           String   @id @default(uuid())
+  userId       String
+  stockCode    String
+  stockName    String
+  exDate       DateTime // 除权除息日
+  dividendType String   // cash/stock
+  amount       Decimal  // 每股分红金额或送股比例
+  shares       Int?     // 持股数量
+  totalAmount  Decimal? // 总分红金额
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, exDate])
+}
+
+// 日历事件
+model CalendarEvent {
+  id          String   @id @default(uuid())
+  userId      String
+  date        DateTime
+  title       String
+  eventType   String   // earnings/dividend/ipo/meeting/custom
+  description String?
+  stockCode   String?
+  stockName   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, date])
+}
+
+// 模拟交易
+model SimulatedTrade {
+  id        String   @id @default(uuid())
+  userId    String
+  stockName String
+  tradeType String   // buy/sell
+  price     Decimal
+  quantity  Int
+  amount    Decimal
+  balance   Decimal  // 交易后余额
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+// 模拟账户
+model SimulatedAccount {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  initialBalance Decimal @default(100000)
+  currentBalance Decimal @default(100000)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// 成本计算记录
+model CostRecord {
+  id        String   @id @default(uuid())
+  userId    String
+  tradeType String   // buy/sell
+  price     Decimal
+  quantity  Int
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// 交易日志
+model TradingJournal {
+  id                String   @id @default(uuid())
+  userId            String
+  date              DateTime @db.Date
+  marketObservation String   @db.Text
+  tradingThoughts   String   @db.Text
+  lessonsLearned    String   @db.Text
+  emotionScore      Int      @default(3)
+  tags              String[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+  @@index([userId])
 }

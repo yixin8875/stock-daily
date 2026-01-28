@@ -1,12 +1,27 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, Form, InputNumber, Select, Button, Table, Space, Row, Col, Spin, Empty } from 'antd'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
 import { stockService, type StockScreenerParams, type ScreenerResult } from '@/services'
+
+const STORAGE_KEY = 'stock_screener_filters'
 
 const StockScreener: React.FC = () => {
   const [form] = Form.useForm()
   const [data, setData] = useState<ScreenerResult[]>([])
   const [loading, setLoading] = useState(false)
+
+  // 从 localStorage 加载筛选条件
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      try {
+        const filters = JSON.parse(saved)
+        form.setFieldsValue(filters)
+      } catch (e) {
+        console.error('Failed to load screener filters:', e)
+      }
+    }
+  }, [form])
 
   const sectorOptions = [
     { label: '科技', value: 'tech' },
@@ -19,6 +34,10 @@ const StockScreener: React.FC = () => {
 
   const handleSearch = async () => {
     const values = form.getFieldsValue()
+
+    // 保存筛选条件到 localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(values))
+
     const params: StockScreenerParams = {}
     if (values.priceRange?.[0]) params.minPrice = values.priceRange[0]
     if (values.priceRange?.[1]) params.maxPrice = values.priceRange[1]
@@ -44,6 +63,7 @@ const StockScreener: React.FC = () => {
   const handleReset = () => {
     form.resetFields()
     setData([])
+    localStorage.removeItem(STORAGE_KEY)
   }
 
   const columns = [

@@ -1,64 +1,86 @@
-import React, { useState } from 'react'
-import { Card, Form, Input, InputNumber, Button, Table, Space, Statistic, Row, Col, Tag } from 'antd'
-
-interface SimTrade {
-  id: string
-  stockName: string
-  type: 'buy' | 'sell'
-  price: number
-  quantity: number
-  time: string
-}
+import React, { useState, useEffect } from 'react'
+import { Card, Form, Input, InputNumber, Button, Table, Space, Statistic, Row, Col, Tag, message, Spin } from 'antd'
+import { simulatorService, type SimulatedTrade, type SimulatedAccount } from '@/services'
 
 const TradingSimulator: React.FC = () => {
-  const [trades, setTrades] = useState<SimTrade[]>([])
-  const [balance, setBalance] = useState(100000)
+  const [trades, setTrades] = useState<SimulatedTrade[]>([])
+  const [account, setAccount] = useState<SimulatedAccount | null>(null)
+  const [loading, setLoading] = useState(false)
   const [form] = Form.useForm()
 
-  const handleTrade = (type: 'buy' | 'sell') => {
-    form.validateFields().then((values) => {
-      const amount = values.price * values.quantity
-      if (type === 'buy' && amount > balance) return
+  const fetchData = async () => {
+    setLoading(true)
+    try {
+      const [accountRes, tradesRes] = await Promise.all([
+        simulatorService.getAccount(),
+        simulatorService.getTrades(),
+      ])
+      setAccount(accountRes.data.data || null)
+      setTrades(tradesRes.data.data || [])
+    } catch {
+      message.error('获取数据失败')
+    } finally {
+      setLoading(false)
+    }
+  }
 
-      const newTrade: SimTrade = {
-        id: Date.now().toString(),
-        stockName: values.stockName,
-        type,
-        price: values.price,
-        quantity: values.quantity,
-        time: new Date().toLocaleString(),
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const handleTrade = async (type: 'buy' | 'sell') => {
+    try {
+      const values = await form.validateFields()
+      const amount = values.price * values.quantity
+      const balance = account?.currentBalance || 0
+      if (type === 'buy' && amount > balance) {
+        message.warning('余额不足')
+        return
       }
 
-      setTrades([newTrade, ...trades])
-      setBalance(type === 'buy' ? balance - amount : balance + amount)
+      await simulatorService.createTrade({
+        stockName: values.stockName,
+        tradeType: type,
+        price: values.price,
+        quantity: values.quantity,
+      })
+      message.success(type === 'buy' ? '买入成功' : '卖出成功')
       form.resetFields()
-    })
+      fetchData()
+    } catch {
+      message.error('交易失败')
+    }
   }
 
-  const handleReset = () => {
-    setTrades([])
-    setBalance(100000)
+  const handleReset = async () => {
+    try {
+      await simulatorService.reset()
+      message.success('重置成功')
+      fetchData()
+    } catch {
+      message.error('重置失败')
+    }
   }
 
-  const totalValue = trades.reduce((sum, t) => {
-    return sum + (t.type === 'buy' ? -1 : 1) * t.price * t.quantity
-  }, 100000)
+  const balance = account?.currentBalance || 100000
+  const initialBalance = account?.initialBalance || 100000
 
   return (
     <Card title="交易模拟器" extra={<Button onClick={handleReset}>重置</Button>}>
+      <Spin spinning={loading}>
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={8}>
           <Statistic title="可用资金" value={balance.toFixed(2)} prefix="¥" />
         </Col>
         <Col span={8}>
-          <Statistic title="账户总值" value={totalValue.toFixed(2)} prefix="¥" />
+          <Statistic title="初始资金" value={initialBalance.toFixed(2)} prefix="¥" />
         </Col>
         <Col span={8}>
           <Statistic
             title="模拟盈亏"
-            value={(totalValue - 100000).toFixed(2)}
+            value={(balance - initialBalance).toFixed(2)}
             prefix="¥"
-            valueStyle={{ color: totalValue >= 100000 ? '#cf1322' : '#3f8600' }}
+            valueStyle={{ color: balance >= initialBalance ? '#cf1322' : '#3f8600' }}
           />
         </Col>
       </Row>
@@ -81,9 +103,10 @@ const TradingSimulator: React.FC = () => {
 
       <Table
         columns={[
-          { title: '时间', dataIndex: 'time', key: 'time', width: 160 },
+          { title: '时间', dataIndex: 'createdAt', key: 'createdAt', width: 160,
+            render: (v: string) => v?.slice(0, 19).replace('T', ' ') },
           { title: '股票', dataIndex: 'stockName', key: 'stockName' },
-          { title: '类型', dataIndex: 'type', key: 'type', render: (v: string) => (
+          { title: '类型', dataIndex: 'tradeType', key: 'tradeType', render: (v: string) => (
             <Tag color={v === 'buy' ? 'red' : 'green'}>{v === 'buy' ? '买入' : '卖出'}</Tag>
           )},
           { title: '价格', dataIndex: 'price', key: 'price' },
@@ -94,6 +117,7 @@ const TradingSimulator: React.FC = () => {
         size="small"
         pagination={{ pageSize: 5 }}
       />
+      </Spin>
     </Card>
   )
 }

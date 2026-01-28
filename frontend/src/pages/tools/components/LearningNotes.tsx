@@ -1,19 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Input, Button, List, Tag, Modal, Form, Select, Empty, Space } from 'antd'
+import { Card, Input, Button, List, Tag, Modal, Form, Select, Empty, Space, message, Spin } from 'antd'
 import { PlusOutlined, DeleteOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons'
-import dayjs from 'dayjs'
+import { noteService, type LearningNote } from '@/services'
 
 const { TextArea } = Input
-
-interface LearningNote {
-  id: string
-  title: string
-  content: string
-  category: string
-  tags: string[]
-  createdAt: string
-  updatedAt: string
-}
 
 const categories = [
   { label: '技术分析', value: 'technical' },
@@ -25,32 +15,44 @@ const categories = [
 
 const LearningNotes: React.FC = () => {
   const [notes, setNotes] = useState<LearningNote[]>([])
+  const [loading, setLoading] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [searchText, setSearchText] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('')
   const [form] = Form.useForm()
 
-  useEffect(() => {
-    const saved = localStorage.getItem('learningNotes')
-    if (saved) setNotes(JSON.parse(saved))
-  }, [])
-
-  const saveNotes = (newNotes: LearningNote[]) => {
-    setNotes(newNotes)
-    localStorage.setItem('learningNotes', JSON.stringify(newNotes))
+  const fetchNotes = async () => {
+    setLoading(true)
+    try {
+      const res = await noteService.getAll()
+      setNotes(res.data.data || [])
+    } catch {
+      message.error('获取笔记失败')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleSubmit = () => {
-    form.validateFields().then((values) => {
-      const now = dayjs().format('YYYY-MM-DD HH:mm')
+  useEffect(() => {
+    fetchNotes()
+  }, [])
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields()
       if (editingId) {
-        saveNotes(notes.map((n) => n.id === editingId ? { ...n, ...values, updatedAt: now } : n))
+        await noteService.update(editingId, values)
+        message.success('更新成功')
       } else {
-        saveNotes([...notes, { id: Date.now().toString(), ...values, createdAt: now, updatedAt: now }])
+        await noteService.create(values)
+        message.success('创建成功')
       }
       closeModal()
-    })
+      fetchNotes()
+    } catch {
+      message.error('操作失败')
+    }
   }
 
   const closeModal = () => {
@@ -65,8 +67,14 @@ const LearningNotes: React.FC = () => {
     setModalVisible(true)
   }
 
-  const handleDelete = (id: string) => {
-    saveNotes(notes.filter((n) => n.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      await noteService.delete(id)
+      message.success('删除成功')
+      fetchNotes()
+    } catch {
+      message.error('删除失败')
+    }
   }
 
   const filteredNotes = notes.filter((n) => {
@@ -80,7 +88,8 @@ const LearningNotes: React.FC = () => {
       title="学习笔记"
       extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => setModalVisible(true)}>新建笔记</Button>}
     >
-      <Space style={{ marginBottom: 16, width: '100%' }} wrap>
+      <Spin spinning={loading}>
+        <Space style={{ marginBottom: 16, width: '100%' }} wrap>
         <Input
           placeholder="搜索笔记"
           prefix={<SearchOutlined />}
@@ -126,6 +135,7 @@ const LearningNotes: React.FC = () => {
           )}
         />
       )}
+      </Spin>
 
       <Modal title={editingId ? '编辑笔记' : '新建笔记'} open={modalVisible} onOk={handleSubmit} onCancel={closeModal} width={600}>
         <Form form={form} layout="vertical">
