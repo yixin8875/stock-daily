@@ -1,7 +1,7 @@
 import React from 'react'
 import { Typography, Space } from 'antd'
 import { ToolOutlined } from '@ant-design/icons'
-import { GridCalculator, DipCalculator, TechnicalIndicatorPanel, CostCalculator, DividendManager, LearningNotes } from './components'
+import { GridCalculator, DipCalculator, TechnicalIndicatorPanel, CostCalculator, DividendManager, LearningNotes, TradingSimulator } from './components'
 
 const { Title } = Typography
 
@@ -19,6 +19,7 @@ const ToolsPage: React.FC = () => {
         <DipCalculator />
         <DividendManager />
         <LearningNotes />
+        <TradingSimulator />
       </Space>
     </div>
   )

@@ -31,6 +31,7 @@ import {
 } from '@ant-design/icons'
 import { stockService, type StockQuote, type StockSearchResult, type KLineData } from '@/services'
 import { KLineChart } from '@/components'
+import { StockCompare } from './components'
 
 const { Title, Text } = Typography
 
@@ -500,6 +501,9 @@ const StockQuotesPage: React.FC = () => {
           )}
         </Spin>
       </Modal>
+
+      {/* 股票对比分析 */}
+      <StockCompare />
     </div>
   )
 }

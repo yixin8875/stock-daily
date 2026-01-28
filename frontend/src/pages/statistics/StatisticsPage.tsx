@@ -21,6 +21,7 @@ import {
   ReviewCalendar,
   HoldingPeriodAnalysis,
   TimingAnalysis,
+  TradingHabits,
 } from './components'
 
 const { Title } = Typography
@@ -187,6 +188,9 @@ const StatisticsPage: React.FC = () => {
             <TimingAnalysis period={period} />
           </Col>
         </Row>
+
+        {/* 交易习惯分析 */}
+        <TradingHabits />
       </Space>
     </div>
   )

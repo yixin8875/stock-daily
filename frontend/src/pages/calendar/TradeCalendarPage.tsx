@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import { tradeService, type Trade } from '@/services'
 import { useThemeStore } from '@/stores'
 import TradeDetailModal from '../diary/components/TradeDetailModal'
+import { CalendarEvents } from './components'
 
 const { Text, Title } = Typography
 
@@ -265,6 +266,9 @@ const TradeCalendarPage: React.FC = () => {
           }}
         />
       )}
+
+      {/* 日历事件管理 */}
+      <CalendarEvents />
     </div>
   )
 }

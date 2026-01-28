@@ -20,13 +20,13 @@ const EquityCurveCompare: React.FC = () => {
     setLoading(true)
     try {
       const res = await analysisService.getProfitCurve('all')
-      const points = res.data.data?.points || []
+      const curve = res.data.data?.curve || []
 
-      const dates = points.map((p) => p.date)
-      const portfolio = points.map((p) => p.cumulativeProfit)
+      const dates = curve.map((p) => p.date)
+      const portfolio = curve.map((p) => p.cumulativeProfit)
 
       // 模拟指数数据
-      const index = points.map((_, i) => {
+      const index = curve.map((_, i: number) => {
         return Math.sin(i / 10) * 5000 + i * 100
       })
 

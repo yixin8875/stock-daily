@@ -5,6 +5,7 @@ import GridLayout, { type Layout, type LayoutItem } from 'react-grid-layout'
 import TodayReminders from '@/components/TodayReminders'
 import RecentTrades from '@/components/RecentTrades'
 import QuickStats from '@/components/QuickStats'
+import { GoalTracker } from './components'
 
 // react-grid-layout 样式
 const gridLayoutStyles = `
@@ -117,12 +118,14 @@ const defaultLayout: LayoutItem[] = [
   { i: 'stats', x: 0, y: 0, w: 12, h: 3, minW: 6, minH: 2 },
   { i: 'reminders', x: 0, y: 3, w: 6, h: 8, minW: 4, minH: 4 },
   { i: 'trades', x: 6, y: 3, w: 6, h: 8, minW: 4, minH: 4 },
+  { i: 'goals', x: 0, y: 11, w: 12, h: 6, minW: 6, minH: 4 },
 ]
 
 const widgetComponents: Record<string, { title: string; component: React.ReactNode }> = {
   stats: { title: '快速统计', component: <QuickStats /> },
   reminders: { title: '今日提醒', component: <TodayReminders /> },
   trades: { title: '最近交易', component: <RecentTrades /> },
+  goals: { title: '目标追踪', component: <GoalTracker /> },
 }
 
 const CustomDashboard: React.FC = () => {
