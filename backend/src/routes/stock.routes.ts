@@ -4,47 +4,93 @@ import { authMiddleware } from '../middlewares';
 
 const router = Router();
 
-// All stock routes require authentication
 router.use(authMiddleware);
 
 /**
- * @route   GET /api/stocks/search
- * @desc    Search stocks by keyword
- * @query   keyword - Search keyword
- * @access  Private
+ * @swagger
+ * /stocks/search:
+ *   get:
+ *     summary: 搜索股票
+ *     tags: [股票]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: keyword
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: 返回搜索结果 }
  */
 router.get('/search', StockController.searchStock);
 
 /**
- * @route   GET /api/stocks/quotes
- * @desc    Get multiple stock quotes
- * @query   codes - Comma-separated stock codes
- * @access  Private
+ * @swagger
+ * /stocks/quotes:
+ *   get:
+ *     summary: 批量获取股票行情
+ *     tags: [股票]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: codes
+ *         required: true
+ *         schema: { type: string }
+ *         description: 逗号分隔的股票代码
+ *     responses:
+ *       200: { description: 返回行情数据 }
  */
 router.get('/quotes', StockController.getQuotes);
 
 /**
- * @route   GET /api/stocks/news
- * @desc    Get stock news
- * @query   code - Optional stock code for specific stock news
- * @access  Private
+ * @swagger
+ * /stocks/news:
+ *   get:
+ *     summary: 获取股票新闻
+ *     tags: [股票]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: 返回新闻列表 }
  */
 router.get('/news', StockController.getStockNews);
 
 /**
- * @route   GET /api/stocks/:code/kline
- * @desc    Get K-line data for a stock
- * @param   code - Stock code
- * @query   period - daily/weekly/monthly
- * @access  Private
+ * @swagger
+ * /stocks/{code}/kline:
+ *   get:
+ *     summary: 获取K线数据
+ *     tags: [股票]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: code
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: period
+ *         schema: { type: string, enum: [daily, weekly, monthly] }
+ *     responses:
+ *       200: { description: 返回K线数据 }
  */
 router.get('/:code/kline', StockController.getKLineData);
 
 /**
- * @route   GET /api/stocks/:code
- * @desc    Get single stock quote
- * @param   code - Stock code
- * @access  Private
+ * @swagger
+ * /stocks/{code}:
+ *   get:
+ *     summary: 获取单只股票行情
+ *     tags: [股票]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: code
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: 返回行情数据 }
  */
 router.get('/:code', StockController.getQuote);
 

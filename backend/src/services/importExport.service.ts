@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as XLSX from 'xlsx';
+import { logger } from './logger.service';
 
 const prisma = new PrismaClient();
 
@@ -185,6 +186,105 @@ class ImportExportService {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, '交易记录');
 
+    return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+  }
+
+  // 导出持仓数据为 CSV
+  async exportPositionsToCSV(userId: string): Promise<string> {
+    const positions = await prisma.position.findMany({
+      where: { userId },
+      orderBy: { stockCode: 'asc' },
+    });
+
+    const headers = ['股票代码', '股票名称', '持仓数量', '成本价', '总成本', '行业', '目标价', '止损价'];
+    const rows = positions.map(p => [
+      p.stockCode,
+      p.stockName,
+      p.quantity,
+      p.costPrice,
+      p.totalCost,
+      p.industry || '',
+      p.targetPrice || '',
+      p.stopPrice || '',
+    ].join(','));
+
+    return '\uFEFF' + [headers.join(','), ...rows].join('\n');
+  }
+
+  // 导出自选股为 CSV
+  async exportWatchlistToCSV(userId: string): Promise<string> {
+    const watchlist = await prisma.watchlist.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const headers = ['股票代码', '股票名称', '目标价', '止损价', '备注', '添加时间'];
+    const rows = watchlist.map(w => [
+      w.stockCode,
+      w.stockName,
+      w.targetPrice || '',
+      w.stopPrice || '',
+      w.notes || '',
+      w.createdAt.toISOString().split('T')[0],
+    ].join(','));
+
+    return '\uFEFF' + [headers.join(','), ...rows].join('\n');
+  }
+
+  // 导出完整数据为 Excel（多 Sheet）
+  async exportAllDataToExcel(userId: string): Promise<Buffer> {
+    const wb = XLSX.utils.book_new();
+
+    // 交易记录
+    const diaries = await prisma.diary.findMany({
+      where: { userId },
+      include: { trades: true },
+      orderBy: { date: 'desc' },
+    });
+
+    const tradesData: Record<string, any>[] = [];
+    for (const diary of diaries) {
+      for (const t of diary.trades) {
+        tradesData.push({
+          '日期': diary.date.toISOString().split('T')[0],
+          '股票代码': t.stockCode,
+          '股票名称': t.stockName,
+          '类型': t.direction === 'BUY' ? '买入' : '卖出',
+          '价格': Number(t.price),
+          '数量': t.quantity,
+          '金额': Number(t.amount),
+        });
+      }
+    }
+    const tradesSheet = XLSX.utils.json_to_sheet(tradesData);
+    XLSX.utils.book_append_sheet(wb, tradesSheet, '交易记录');
+
+    // 持仓数据
+    const positions = await prisma.position.findMany({ where: { userId } });
+    const positionsData = positions.map(p => ({
+      '股票代码': p.stockCode,
+      '股票名称': p.stockName,
+      '持仓数量': p.quantity,
+      '成本价': Number(p.costPrice),
+      '总成本': Number(p.totalCost),
+      '行业': p.industry || '',
+    }));
+    const positionsSheet = XLSX.utils.json_to_sheet(positionsData);
+    XLSX.utils.book_append_sheet(wb, positionsSheet, '持仓');
+
+    // 自选股
+    const watchlist = await prisma.watchlist.findMany({ where: { userId } });
+    const watchlistData = watchlist.map(w => ({
+      '股票代码': w.stockCode,
+      '股票名称': w.stockName,
+      '目标价': w.targetPrice ? Number(w.targetPrice) : '',
+      '止损价': w.stopPrice ? Number(w.stopPrice) : '',
+      '备注': w.notes || '',
+    }));
+    const watchlistSheet = XLSX.utils.json_to_sheet(watchlistData);
+    XLSX.utils.book_append_sheet(wb, watchlistSheet, '自选股');
+
+    logger.info(`Exported all data for user ${userId}`);
     return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
   }
 }

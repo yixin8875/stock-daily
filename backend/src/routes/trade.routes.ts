@@ -8,22 +8,99 @@ const router = Router();
 // All trade routes require authentication
 router.use(authMiddleware);
 
-// Get trade statistics
+/**
+ * @swagger
+ * /trades/statistics:
+ *   get:
+ *     summary: 获取交易统计
+ *     tags: [交易]
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200: { description: 返回交易统计数据 }
+ */
 router.get('/statistics', TradeController.getStatistics);
 
-// Get trade calendar
+/**
+ * @swagger
+ * /trades/calendar:
+ *   get:
+ *     summary: 获取交易日历
+ *     tags: [交易]
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200: { description: 返回交易日历数据 }
+ */
 router.get('/calendar', TradeController.getCalendar);
 
-// Get stock trade history
+/**
+ * @swagger
+ * /trades/stock/{stockCode}/history:
+ *   get:
+ *     summary: 获取股票交易历史
+ *     tags: [交易]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: stockCode
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: 返回股票交易历史 }
+ */
 router.get('/stock/:stockCode/history', TradeController.getStockHistory);
 
-// Get all trades (with filters)
+/**
+ * @swagger
+ * /trades:
+ *   get:
+ *     summary: 获取交易列表
+ *     tags: [交易]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *     responses:
+ *       200: { description: 返回交易列表 }
+ */
 router.get('/', TradeController.findAll);
 
-// Get trade by ID
+/**
+ * @swagger
+ * /trades/{id}:
+ *   get:
+ *     summary: 获取交易详情
+ *     tags: [交易]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: 返回交易详情 }
+ */
 router.get('/:id', TradeController.findById);
 
-// Create trade
+/**
+ * @swagger
+ * /trades:
+ *   post:
+ *     summary: 创建交易记录
+ *     tags: [交易]
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Trade'
+ *     responses:
+ *       200: { description: 创建成功 }
+ */
 router.post(
   '/',
   [
@@ -46,7 +123,21 @@ router.post(
   TradeController.create
 );
 
-// Update trade
+/**
+ * @swagger
+ * /trades/{id}:
+ *   put:
+ *     summary: 更新交易记录
+ *     tags: [交易]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: 更新成功 }
+ */
 router.put(
   '/:id',
   [
@@ -66,7 +157,21 @@ router.put(
   TradeController.update
 );
 
-// Delete trade
+/**
+ * @swagger
+ * /trades/{id}:
+ *   delete:
+ *     summary: 删除交易记录
+ *     tags: [交易]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: 删除成功 }
+ */
 router.delete('/:id', TradeController.delete);
 
 export default router;

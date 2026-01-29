@@ -73,4 +73,52 @@ export class ImportExportController {
       res.status(500).json({ success: false, message: '导出失败' });
     }
   }
+
+  static async exportPositions(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: '未授权' });
+      }
+
+      const csv = await importExportService.exportPositionsToCSV(userId);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename=positions.csv');
+      res.send(csv);
+    } catch (error) {
+      res.status(500).json({ success: false, message: '导出失败' });
+    }
+  }
+
+  static async exportWatchlist(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: '未授权' });
+      }
+
+      const csv = await importExportService.exportWatchlistToCSV(userId);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename=watchlist.csv');
+      res.send(csv);
+    } catch (error) {
+      res.status(500).json({ success: false, message: '导出失败' });
+    }
+  }
+
+  static async exportAll(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: '未授权' });
+      }
+
+      const buffer = await importExportService.exportAllDataToExcel(userId);
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=stock-daily-data.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      res.status(500).json({ success: false, message: '导出失败' });
+    }
+  }
 }

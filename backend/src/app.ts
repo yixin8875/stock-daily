@@ -3,11 +3,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+import swaggerUi from 'swagger-ui-express';
 import routes from './routes';
 import { errorHandler, createRateLimiter } from './middlewares';
 import { cacheService } from './services/cache.service';
 import { schedulerService } from './services/scheduler.service';
 import { wsService } from './services/websocket.service';
+import { swaggerSpec } from './config/swagger';
 import { createServer } from 'http';
 
 // Load environment variables
@@ -43,6 +45,18 @@ app.use('/api', createRateLimiter({
 
 // API routes
 app.use('/api', routes);
+
+// Swagger API 文档
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Stock Daily API 文档',
+}));
+
+// Swagger JSON
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {

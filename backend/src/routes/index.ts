@@ -40,6 +40,7 @@ import behaviorRoutes from './behavior.routes';
 import aiAnalysisRoutes from './aiAnalysis.routes';
 import tradePlanTemplateRoutes from './tradePlanTemplate.routes';
 import tradeReviewTemplateRoutes from './tradeReviewTemplate.routes';
+import signalGeneratorRoutes from './signalGenerator.routes';
 import { authMiddleware } from '../middlewares';
 
 const router = Router();
@@ -86,5 +87,6 @@ router.use('/behavior', behaviorRoutes);
 router.use('/ai-analysis', aiAnalysisRoutes);
 router.use('/trade-plans', authMiddleware, tradePlanTemplateRoutes);
 router.use('/trade-reviews', authMiddleware, tradeReviewTemplateRoutes);
+router.use('/signal-generator', authMiddleware, signalGeneratorRoutes);
 
 export default router;
