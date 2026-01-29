@@ -41,6 +41,7 @@ import aiAnalysisRoutes from './aiAnalysis.routes';
 import tradePlanTemplateRoutes from './tradePlanTemplate.routes';
 import tradeReviewTemplateRoutes from './tradeReviewTemplate.routes';
 import signalGeneratorRoutes from './signalGenerator.routes';
+import twoFactorRoutes from './twoFactor.routes';
 import { authMiddleware } from '../middlewares';
 
 const router = Router();
@@ -88,5 +89,6 @@ router.use('/ai-analysis', aiAnalysisRoutes);
 router.use('/trade-plans', authMiddleware, tradePlanTemplateRoutes);
 router.use('/trade-reviews', authMiddleware, tradeReviewTemplateRoutes);
 router.use('/signal-generator', authMiddleware, signalGeneratorRoutes);
+router.use('/2fa', twoFactorRoutes);
 
 export default router;

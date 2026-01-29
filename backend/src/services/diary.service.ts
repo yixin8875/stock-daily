@@ -1,5 +1,43 @@
 import { prisma } from '../app';
 import { ApiError } from '../middlewares';
+import { MarketTrend, MarketVolume, Emotion, LearningCategory } from '@prisma/client';
+
+// 枚举值转换函数
+const toMarketTrend = (value?: string): MarketTrend | undefined => {
+  if (!value) return undefined;
+  const upper = value.toUpperCase();
+  if (Object.values(MarketTrend).includes(upper as MarketTrend)) {
+    return upper as MarketTrend;
+  }
+  return undefined;
+};
+
+const toMarketVolume = (value?: string): MarketVolume | undefined => {
+  if (!value) return undefined;
+  const upper = value.toUpperCase();
+  if (Object.values(MarketVolume).includes(upper as MarketVolume)) {
+    return upper as MarketVolume;
+  }
+  return undefined;
+};
+
+const toEmotion = (value?: string): Emotion | undefined => {
+  if (!value) return undefined;
+  const upper = value.toUpperCase();
+  if (Object.values(Emotion).includes(upper as Emotion)) {
+    return upper as Emotion;
+  }
+  return undefined;
+};
+
+const toLearningCategory = (value?: string): LearningCategory | undefined => {
+  if (!value) return undefined;
+  const upper = value.toUpperCase();
+  if (Object.values(LearningCategory).includes(upper as LearningCategory)) {
+    return upper as LearningCategory;
+  }
+  return undefined;
+};
 
 export interface CreateDiaryInput {
   date: Date;
@@ -42,8 +80,8 @@ export class DiaryService {
       data: {
         user: { connect: { id: userId } },
         date: input.date,
-        marketTrend: input.marketTrend as any,
-        marketVolume: input.marketVolume as any,
+        marketTrend: toMarketTrend(input.marketTrend),
+        marketVolume: toMarketVolume(input.marketVolume),
         marketComment: input.marketComment,
         hotSectors: input.hotSectors,
         profitLossAmount: input.profitLossAmount,
@@ -53,12 +91,12 @@ export class DiaryService {
         reflectionBad: input.reflectionBad,
         reflectionImprove: input.reflectionImprove,
         reflectionTags: input.reflectionTags,
-        emotionBefore: input.emotionBefore as any,
-        emotionDuring: input.emotionDuring as any,
-        emotionAfter: input.emotionAfter as any,
+        emotionBefore: toEmotion(input.emotionBefore),
+        emotionDuring: toEmotion(input.emotionDuring),
+        emotionAfter: toEmotion(input.emotionAfter),
         emotionNote: input.emotionNote,
         learningNote: input.learningNote,
-        learningCategory: input.learningCategory as any,
+        learningCategory: toLearningCategory(input.learningCategory),
         riskNotes: input.riskNotes,
       },
       include: {
@@ -150,9 +188,29 @@ export class DiaryService {
       throw new ApiError(404, 'Diary not found');
     }
 
+    const updateData: any = { ...input };
+    if (input.marketTrend !== undefined) {
+      updateData.marketTrend = toMarketTrend(input.marketTrend);
+    }
+    if (input.marketVolume !== undefined) {
+      updateData.marketVolume = toMarketVolume(input.marketVolume);
+    }
+    if (input.emotionBefore !== undefined) {
+      updateData.emotionBefore = toEmotion(input.emotionBefore);
+    }
+    if (input.emotionDuring !== undefined) {
+      updateData.emotionDuring = toEmotion(input.emotionDuring);
+    }
+    if (input.emotionAfter !== undefined) {
+      updateData.emotionAfter = toEmotion(input.emotionAfter);
+    }
+    if (input.learningCategory !== undefined) {
+      updateData.learningCategory = toLearningCategory(input.learningCategory);
+    }
+
     const updatedDiary = await prisma.diary.update({
       where: { id },
-      data: input as any,
+      data: updateData,
       include: {
         trades: true,
         watchStocks: true,

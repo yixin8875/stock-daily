@@ -1,6 +1,7 @@
 import * as cron from 'node-cron';
 import { MarketService } from './market.service';
 import { cacheService, CacheKeys, CacheTTL } from './cache.service';
+import { dataCleanupService } from './dataCleanup.service';
 
 export interface ScheduledTask {
   name: string;
@@ -39,6 +40,11 @@ class SchedulerService {
     // 每天 9:00 清理过期缓存
     this.addTask('cleanupCache', '0 9 * * *', async () => {
       await this.cleanupCache();
+    });
+
+    // 每天 3:00 执行数据清洗
+    this.addTask('dataCleanup', '0 3 * * *', async () => {
+      await this.runDataCleanup();
     });
   }
 
@@ -95,6 +101,11 @@ class SchedulerService {
 
   async cleanupCache(): Promise<void> {
     console.log('[Scheduler] Cache cleanup completed');
+  }
+
+  async runDataCleanup(): Promise<void> {
+    const result = await dataCleanupService.runAll();
+    console.log(`[Scheduler] Data cleanup: signals=${result.signals}, alerts=${result.alerts}, orphans=${result.orphans}`);
   }
 
   startAll(): void {

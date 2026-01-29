@@ -269,7 +269,7 @@ export class MarketService {
       });
 
       const data = response.data;
-      if (data.data?.diff) {
+      if (data.data?.diff && Array.isArray(data.data.diff)) {
         const result = data.data.diff.map((item: any) => ({
           code: item.f12,
           name: item.f14,
@@ -329,7 +329,7 @@ export class MarketService {
       });
 
       const data = response.data;
-      if (data.data?.diff) {
+      if (data.data?.diff && Array.isArray(data.data.diff)) {
         const stocks = data.data.diff;
         let advance = 0, decline = 0, flat = 0;
         let limitUp = 0, limitDown = 0;
