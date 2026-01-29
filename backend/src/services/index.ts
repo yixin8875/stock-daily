@@ -22,3 +22,7 @@ export { costService } from './cost.service';
 export { journalService } from './journal.service';
 export { MarketService } from './market.service';
 export { IndicatorService } from './indicator.service';
+export { cacheService, CacheKeys, CacheTTL } from './cache.service';
+export { SessionService } from './session.service';
+export { schedulerService } from './scheduler.service';
+export { wsService } from './websocket.service';

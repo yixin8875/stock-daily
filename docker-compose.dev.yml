@@ -26,6 +26,24 @@ services:
       retries: 5
       start_period: 10s
 
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: stock-daily-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data_dev:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - stock-daily-network-dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Express Backend Service (Development)
   backend:
     build:
@@ -37,6 +55,7 @@ services:
       NODE_ENV: development
       PORT: 3000
       DATABASE_URL: postgresql://${POSTGRES_USER:-stockuser}:${POSTGRES_PASSWORD:-stockpass}@postgres:5432/${POSTGRES_DB:-stockdaily}
+      REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-dev-secret-key}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       CORS_ORIGIN: http://localhost:5173
@@ -47,6 +66,8 @@ services:
       - "3000:3000"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - stock-daily-network-dev
@@ -76,4 +97,6 @@ networks:
 
 volumes:
   postgres_data_dev:
+    driver: local
+  redis_data_dev:
     driver: local

@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { ApiError } from './errorHandler';
+import { SessionService } from '../services/session.service';
 
 export interface AuthRequest extends Request {
   userId?: string;
+  token?: string;
 }
 
 export interface JwtPayload {
@@ -11,7 +13,7 @@ export interface JwtPayload {
   email: string;
 }
 
-export const authMiddleware = (
+export const authMiddleware = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -30,8 +32,15 @@ export const authMiddleware = (
       throw new ApiError(500, 'JWT secret is not configured');
     }
 
+    // 验证会话是否有效（检查黑名单）
+    const isValid = await SessionService.isValidSession(token);
+    if (!isValid) {
+      throw new ApiError(401, 'Session has been invalidated');
+    }
+
     const decoded = jwt.verify(token, secret) as JwtPayload;
     req.userId = decoded.userId;
+    req.token = token;
 
     next();
   } catch (error) {

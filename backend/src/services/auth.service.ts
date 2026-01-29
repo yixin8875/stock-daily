@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../app';
 import { ApiError } from '../middlewares';
+import { SessionService } from './session.service';
 
 export interface RegisterInput {
   email: string;
@@ -63,6 +64,9 @@ export class AuthService {
     // Generate token
     const token = this.generateToken(user.id, user.email);
 
+    // 创建会话
+    await SessionService.createSession(user.id, token);
+
     return {
       user: {
         id: user.id,
@@ -95,6 +99,9 @@ export class AuthService {
     // Generate token
     const token = this.generateToken(user.id, user.email);
 
+    // 创建会话
+    await SessionService.createSession(user.id, token);
+
     return {
       user: {
         id: user.id,
@@ -121,5 +128,19 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  /**
+   * 登出当前会话
+   */
+  static async logout(token: string): Promise<void> {
+    await SessionService.invalidateSession(token);
+  }
+
+  /**
+   * 登出所有设备
+   */
+  static async logoutAll(userId: string): Promise<void> {
+    await SessionService.invalidateAllSessions(userId);
   }
 }

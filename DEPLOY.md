@@ -311,3 +311,38 @@ crontab -e
 │                   - 数据卷挂载                            │
 └─────────────────────────────────────────────────────────┘
 ```
+
+## API 路由说明
+
+### 核心业务 API
+
+| 路由 | 说明 | 认证 |
+|------|------|------|
+| `/api/auth` | 用户认证（登录/注册） | 否 |
+| `/api/diaries` | 交易日记 | 是 |
+| `/api/trades` | 交易记录 | 是 |
+| `/api/positions` | 持仓管理 | 是 |
+| `/api/watchlist` | 自选股管理 | 是 |
+
+### 分析功能 API
+
+| 路由 | 说明 | 认证 |
+|------|------|------|
+| `/api/ai-analysis` | AI 大盘分析 | 是 |
+| `/api/dashboard` | 交易统计仪表盘 | 是 |
+| `/api/correlation` | 持仓相关性分析 | 是 |
+| `/api/behavior` | 交易行为分析 | 是 |
+| `/api/statistics` | 统计报表 | 是 |
+
+### 工具功能 API
+
+| 路由 | 说明 | 认证 |
+|------|------|------|
+| `/api/stocks` | 股票行情查询 | 否 |
+| `/api/trade-plans` | 交易计划管理 | 是 |
+| `/api/trade-reviews` | 交易复盘模板 | 是 |
+| `/api/calendar-events` | 日历事件 | 是 |
+| `/api/goals` | 投资目标 | 是 |
+| `/api/notes` | 学习笔记 | 是 |
+| `/api/dividends` | 分红记录 | 是 |
+| `/api/simulator` | 模拟交易 | 是 |

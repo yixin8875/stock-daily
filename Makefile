@@ -11,29 +11,34 @@ help:
 	@echo "================================="
 	@echo ""
 	@echo "Development:"
-	@echo "  make dev          - Start development environment"
-	@echo "  make dev-down     - Stop development environment"
+	@echo "  make dev           - Start development environment"
+	@echo "  make dev-down      - Stop development environment"
+	@echo "  make dev-logs      - View development logs"
 	@echo ""
 	@echo "Production:"
-	@echo "  make prod         - Start production environment"
-	@echo "  make prod-down    - Stop production environment"
-	@echo "  make build        - Build production images"
+	@echo "  make prod          - Start production environment"
+	@echo "  make prod-down     - Stop production environment"
+	@echo "  make prod-restart  - Restart production environment"
+	@echo "  make build         - Build production images"
 	@echo ""
 	@echo "Common:"
-	@echo "  make logs         - View all service logs"
-	@echo "  make logs-backend - View backend logs only"
-	@echo "  make status       - Show service status"
-	@echo "  make restart      - Restart all services"
-	@echo "  make clean        - Remove containers and volumes"
+	@echo "  make logs          - View all service logs"
+	@echo "  make logs-backend  - View backend logs only"
+	@echo "  make logs-frontend - View frontend logs only"
+	@echo "  make logs-db       - View database logs only"
+	@echo "  make status        - Show service status"
+	@echo "  make health        - Check service health"
+	@echo "  make clean         - Remove containers and volumes"
 	@echo ""
 	@echo "Database:"
-	@echo "  make migrate      - Run database migrations"
-	@echo "  make backup       - Create database backup"
-	@echo "  make db-shell     - Open PostgreSQL shell"
+	@echo "  make migrate       - Run database migrations"
+	@echo "  make db-studio     - Open Prisma Studio"
+	@echo "  make db-shell      - Open PostgreSQL shell"
+	@echo "  make backup        - Create database backup"
 	@echo ""
 	@echo "Setup:"
-	@echo "  make setup        - Initial setup (copy env files)"
-	@echo "  make check        - Check environment configuration"
+	@echo "  make setup         - Initial setup (copy env files)"
+	@echo "  make check         - Check environment configuration"
 
 # ================================
 # Setup
@@ -85,6 +90,11 @@ prod: check
 prod-down:
 	docker compose down
 
+prod-restart:
+	docker compose down
+	docker compose up -d --build
+	@echo "Production environment restarted!"
+
 build:
 	docker compose build --no-cache
 
@@ -127,16 +137,41 @@ clean:
 migrate:
 	docker compose exec backend npx prisma migrate deploy
 
+db-studio:
+	cd backend && npx prisma studio
+
 db-shell:
 	docker compose exec postgres psql -U $${POSTGRES_USER:-stockuser} -d $${POSTGRES_DB:-stockdaily}
 
+db-reset:
+	@echo "WARNING: This will reset the database!"
+	@read -p "Are you sure? (y/N) " confirm && [ "$$confirm" = "y" ] && \
+		docker compose exec backend npx prisma migrate reset --force || echo "Cancelled"
+
 backup:
-	@./scripts/backup.sh
+	@./scripts/backup.sh backup
 
 # ================================
 # Health Check
 # ================================
 health:
 	@echo "Checking service health..."
-	@curl -s http://localhost/health > /dev/null && echo "Backend: OK" || echo "Backend: FAILED"
-	@curl -s http://localhost > /dev/null && echo "Frontend: OK" || echo "Frontend: FAILED"
+	@echo -n "Backend API: " && (curl -s http://localhost/health > /dev/null && echo "OK" || echo "FAILED")
+	@echo -n "Frontend: " && (curl -s http://localhost > /dev/null && echo "OK" || echo "FAILED")
+	@echo -n "Database: " && (docker compose exec -T postgres pg_isready -U stockuser > /dev/null 2>&1 && echo "OK" || echo "FAILED")
+	@echo -n "Redis: " && (docker compose exec -T redis redis-cli ping > /dev/null 2>&1 && echo "OK" || echo "FAILED")
+
+# ================================
+# Shell Access
+# ================================
+shell-backend:
+	docker compose exec backend sh
+
+shell-frontend:
+	docker compose exec frontend sh
+
+redis-cli:
+	docker compose exec redis redis-cli
+
+logs-redis:
+	docker compose logs -f redis

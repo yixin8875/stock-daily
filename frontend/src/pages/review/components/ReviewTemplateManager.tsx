@@ -1,24 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Form, Input, Select, Rate, Button, Table, Modal, Tag, Space, Empty, Row, Col, Statistic } from 'antd'
+import { Card, Form, Input, Select, Rate, Button, Table, Modal, Tag, Space, Empty, Row, Col, Statistic, message } from 'antd'
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
+import { tradeReviewTemplateService, type TradeReviewTemplate as ReviewTemplate } from '@/services'
 
 const { TextArea } = Input
-
-interface ReviewTemplate {
-  id: string
-  date: string
-  stockCode: string
-  stockName: string
-  tradeType: 'buy' | 'sell'
-  entryReason: string
-  exitReason: string
-  marketCondition: string
-  emotionState: number
-  lessonsLearned: string
-  improvement: string
-  rating: number
-}
 
 const ReviewTemplateManager: React.FC = () => {
   const [data, setData] = useState<ReviewTemplate[]>([])
@@ -26,32 +12,41 @@ const ReviewTemplateManager: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form] = Form.useForm()
 
-  useEffect(() => {
-    const saved = localStorage.getItem('reviewTemplates')
-    if (saved) setData(JSON.parse(saved))
-  }, [])
-
-  const saveData = (newData: ReviewTemplate[]) => {
-    setData(newData)
-    localStorage.setItem('reviewTemplates', JSON.stringify(newData))
+  const fetchData = async () => {
+    try {
+      const res = await tradeReviewTemplateService.getAll()
+      if (res.data.success && res.data.data) {
+        setData(res.data.data)
+      }
+    } catch (error) {
+      console.error('加载复盘记录失败:', error)
+    }
   }
 
-  const handleSubmit = () => {
-    form.validateFields().then((values) => {
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields()
       if (editingId) {
-        saveData(data.map((d) => (d.id === editingId ? { ...d, ...values } : d)))
+        await tradeReviewTemplateService.update(editingId, values)
+        message.success('更新成功')
       } else {
-        const newRecord: ReviewTemplate = {
-          id: Date.now().toString(),
-          date: dayjs().format('YYYY-MM-DD'),
+        await tradeReviewTemplateService.create({
           ...values,
-        }
-        saveData([...data, newRecord])
+          date: dayjs().format('YYYY-MM-DD'),
+        })
+        message.success('创建成功')
       }
       setModalVisible(false)
       setEditingId(null)
       form.resetFields()
-    })
+      fetchData()
+    } catch (error) {
+      message.error('操作失败')
+    }
   }
 
   const handleEdit = (record: ReviewTemplate) => {
@@ -60,8 +55,14 @@ const ReviewTemplateManager: React.FC = () => {
     setModalVisible(true)
   }
 
-  const handleDelete = (id: string) => {
-    saveData(data.filter((d) => d.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      await tradeReviewTemplateService.delete(id)
+      message.success('删除成功')
+      fetchData()
+    } catch (error) {
+      message.error('删除失败')
+    }
   }
 
   const avgRating = data.length > 0 ? data.reduce((sum, d) => sum + d.rating, 0) / data.length : 0

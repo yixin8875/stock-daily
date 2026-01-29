@@ -31,6 +31,11 @@ class SchedulerService {
       await this.updateDragonTiger();
     });
 
+    // 每天 17:00 更新北向资金
+    this.addTask('updateNorthFlow', '0 17 * * 1-5', async () => {
+      await this.updateNorthFlow();
+    });
+
     // 每天 9:00 清理过期缓存
     this.addTask('cleanupCache', '0 9 * * *', async () => {
       await this.cleanupCache();
@@ -81,6 +86,11 @@ class SchedulerService {
     const today = new Date().toISOString().split('T')[0];
     const data = await MarketService.getDragonTiger();
     await cacheService.set(CacheKeys.DRAGON_TIGER + today, data, CacheTTL.DRAGON_TIGER);
+  }
+
+  async updateNorthFlow(): Promise<void> {
+    const data = await MarketService.getNorthFlow();
+    await cacheService.set(CacheKeys.NORTH_FLOW + ':10', data, CacheTTL.NORTH_FLOW);
   }
 
   async cleanupCache(): Promise<void> {

@@ -84,5 +84,7 @@ router.use('/dashboard', tradingDashboardRoutes);
 router.use('/correlation', correlationRoutes);
 router.use('/behavior', behaviorRoutes);
 router.use('/ai-analysis', aiAnalysisRoutes);
+router.use('/trade-plans', authMiddleware, tradePlanTemplateRoutes);
+router.use('/trade-reviews', authMiddleware, tradeReviewTemplateRoutes);
 
 export default router;

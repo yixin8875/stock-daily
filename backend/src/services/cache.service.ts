@@ -1,12 +1,4 @@
-import Redis from 'ioredis';
-
-// Redis 配置
-const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD || undefined,
-  db: parseInt(process.env.REDIS_DB || '0'),
-};
+import Redis, { RedisOptions } from 'ioredis';
 
 // 缓存键前缀
 export const CacheKeys = {
@@ -38,7 +30,18 @@ class CacheService {
     if (this.connected) return;
 
     try {
-      this.client = new Redis(redisConfig);
+      const redisUrl = process.env.REDIS_URL;
+      if (redisUrl) {
+        this.client = new Redis(redisUrl);
+      } else {
+        const config: RedisOptions = {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT || '6379'),
+          password: process.env.REDIS_PASSWORD || undefined,
+          db: parseInt(process.env.REDIS_DB || '0'),
+        };
+        this.client = new Redis(config);
+      }
 
       this.client.on('connect', () => {
         console.log('Redis connected');

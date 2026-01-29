@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { cacheService, CacheKeys, CacheTTL } from './cache.service';
 
 export interface StockQuote {
   code: string;
@@ -45,6 +46,13 @@ export class StockService {
    */
   static async getQuote(stockCode: string): Promise<StockQuote | null> {
     try {
+      // 尝试从缓存获取
+      const cacheKey = `${CacheKeys.STOCK_QUOTE}${stockCode}`;
+      const cached = await cacheService.get<StockQuote>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       // 转换股票代码格式
       const sinaCode = this.toSinaCode(stockCode);
       const url = `https://hq.sinajs.cn/list=${sinaCode}`;
@@ -57,7 +65,14 @@ export class StockService {
       });
 
       const text = new TextDecoder('gbk').decode(response.data);
-      return this.parseSinaQuote(stockCode, text);
+      const quote = this.parseSinaQuote(stockCode, text);
+
+      // 缓存结果
+      if (quote) {
+        await cacheService.set(cacheKey, quote, CacheTTL.QUOTE);
+      }
+
+      return quote;
     } catch (error) {
       console.error('Failed to fetch stock quote:', error);
       return null;
@@ -193,6 +208,13 @@ export class StockService {
    */
   static async getKLineData(stockCode: string, period: string = 'daily'): Promise<KLineData[]> {
     try {
+      // 尝试从缓存获取
+      const cacheKey = `${CacheKeys.STOCK_KLINE}${stockCode}:${period}`;
+      const cached = await cacheService.get<KLineData[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const code = stockCode.replace(/\\.(SH|SZ|sh|sz)$/, '');
       const market = stockCode.toUpperCase().includes('SH') || code.startsWith('6') ? '1' : '0';
 
@@ -212,7 +234,7 @@ export class StockService {
 
       const data = response.data;
       if (data.data?.klines) {
-        return data.data.klines.map((line: string) => {
+        const klines = data.data.klines.map((line: string) => {
           const parts = line.split(',');
           return {
             date: parts[0],
@@ -224,6 +246,10 @@ export class StockService {
             amount: parseFloat(parts[6]),
           };
         });
+
+        // 缓存结果
+        await cacheService.set(cacheKey, klines, CacheTTL.KLINE);
+        return klines;
       }
       return [];
     } catch (error) {

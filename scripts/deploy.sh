@@ -8,6 +8,7 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Script directory
@@ -31,7 +32,7 @@ if [ ! -f ".env" ]; then
 fi
 
 # Parse command line arguments
-ACTION=${1:-"up"}
+ACTION=${1:-"help"}
 
 case $ACTION in
     "up"|"start")
@@ -52,10 +53,47 @@ case $ACTION in
         echo -e "${GREEN}Services restarted successfully!${NC}"
         ;;
     "logs")
-        docker compose logs -f
+        SERVICE=${2:-""}
+        if [ -n "$SERVICE" ]; then
+            docker compose logs -f "$SERVICE"
+        else
+            docker compose logs -f
+        fi
         ;;
     "status")
         docker compose ps
+        ;;
+    "health")
+        echo -e "${BLUE}Checking service health...${NC}"
+        echo -n "Backend API: "
+        if curl -s http://localhost/health > /dev/null 2>&1; then
+            echo -e "${GREEN}OK${NC}"
+        else
+            echo -e "${RED}FAILED${NC}"
+        fi
+        echo -n "Frontend: "
+        if curl -s http://localhost > /dev/null 2>&1; then
+            echo -e "${GREEN}OK${NC}"
+        else
+            echo -e "${RED}FAILED${NC}"
+        fi
+        echo -n "Database: "
+        if docker compose exec -T postgres pg_isready -U stockuser > /dev/null 2>&1; then
+            echo -e "${GREEN}OK${NC}"
+        else
+            echo -e "${RED}FAILED${NC}"
+        fi
+        echo -n "Redis: "
+        if docker compose exec -T redis redis-cli ping > /dev/null 2>&1; then
+            echo -e "${GREEN}OK${NC}"
+        else
+            echo -e "${RED}FAILED${NC}"
+        fi
+        ;;
+    "migrate")
+        echo -e "${BLUE}Running database migrations...${NC}"
+        docker compose exec backend npx prisma migrate deploy
+        echo -e "${GREEN}Migrations completed.${NC}"
         ;;
     "clean")
         echo -e "${RED}Warning: This will remove all containers and volumes!${NC}"
@@ -71,17 +109,34 @@ case $ACTION in
         docker compose build --no-cache
         echo -e "${GREEN}Build completed.${NC}"
         ;;
-    *)
-        echo "Usage: $0 {up|down|restart|logs|status|clean|build}"
+    "shell")
+        SERVICE=${2:-"backend"}
+        echo -e "${BLUE}Opening shell in $SERVICE...${NC}"
+        docker compose exec "$SERVICE" sh
+        ;;
+    "db")
+        echo -e "${BLUE}Opening PostgreSQL shell...${NC}"
+        docker compose exec postgres psql -U stockuser -d stockdaily
+        ;;
+    "help"|*)
+        echo "Usage: $0 <command> [options]"
         echo ""
         echo "Commands:"
-        echo "  up|start   - Start all services"
-        echo "  down|stop  - Stop all services"
-        echo "  restart    - Restart all services"
-        echo "  logs       - View service logs"
-        echo "  status     - Show service status"
-        echo "  clean      - Remove containers, volumes, and images"
-        echo "  build      - Build images without cache"
-        exit 1
+        echo "  up|start     - Start all services"
+        echo "  down|stop    - Stop all services"
+        echo "  restart      - Restart all services"
+        echo "  logs [svc]   - View logs (optionally for specific service)"
+        echo "  status       - Show service status"
+        echo "  health       - Check service health"
+        echo "  migrate      - Run database migrations"
+        echo "  build        - Build images without cache"
+        echo "  clean        - Remove containers, volumes, and images"
+        echo "  shell [svc]  - Open shell in service (default: backend)"
+        echo "  db           - Open PostgreSQL shell"
+        echo ""
+        echo "Examples:"
+        echo "  $0 up              # Start all services"
+        echo "  $0 logs backend    # View backend logs"
+        echo "  $0 shell frontend  # Open shell in frontend"
         ;;
 esac

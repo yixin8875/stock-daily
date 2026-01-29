@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { cacheService, CacheKeys, CacheTTL } from './cache.service';
 
 // 龙虎榜数据接口
 export interface DragonTigerItem {
@@ -85,6 +86,13 @@ export class MarketService {
    */
   static async getDragonTiger(date?: string): Promise<DragonTigerItem[]> {
     try {
+      // 尝试从缓存获取
+      const cacheKey = `${CacheKeys.DRAGON_TIGER}${date || 'latest'}`;
+      const cached = await cacheService.get<DragonTigerItem[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const url = 'https://datacenter-web.eastmoney.com/api/data/v1/get';
       const response = await axios.get(url, {
         params: {
@@ -101,7 +109,7 @@ export class MarketService {
 
       const data = response.data;
       if (data.result?.data) {
-        return data.result.data.map((item: any) => ({
+        const result = data.result.data.map((item: any) => ({
           code: item.SECURITY_CODE,
           name: item.SECURITY_NAME_ABBR,
           change: item.CHANGE_RATE || 0,
@@ -110,6 +118,9 @@ export class MarketService {
           sellAmount: (item.BILLBOARD_SELL_AMT || 0) / 100000000,
           netAmount: (item.BILLBOARD_NET_AMT || 0) / 100000000,
         }));
+        // 缓存结果
+        await cacheService.set(cacheKey, result, CacheTTL.DRAGON_TIGER);
+        return result;
       }
       return [];
     } catch (error) {
@@ -159,6 +170,13 @@ export class MarketService {
    */
   static async getNorthFlow(days: number = 10): Promise<NorthFlowData[]> {
     try {
+      // 尝试从缓存获取
+      const cacheKey = `${CacheKeys.NORTH_FLOW}:${days}`;
+      const cached = await cacheService.get<NorthFlowData[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const url = 'https://push2his.eastmoney.com/api/qt/kamt.kline/get';
       const response = await axios.get(url, {
         params: {
@@ -171,7 +189,7 @@ export class MarketService {
 
       const data = response.data;
       if (data.data?.s2n) {
-        return data.data.s2n.map((line: string) => {
+        const result = data.data.s2n.map((line: string) => {
           const parts = line.split(',');
           const shConnect = parseFloat(parts[1]) / 10000 || 0;
           const szConnect = parseFloat(parts[2]) / 10000 || 0;
@@ -182,6 +200,9 @@ export class MarketService {
             total: Math.round((shConnect + szConnect) * 100) / 100,
           };
         });
+        // 缓存结果
+        await cacheService.set(cacheKey, result, CacheTTL.NORTH_FLOW);
+        return result;
       }
       return [];
     } catch (error) {
@@ -231,6 +252,12 @@ export class MarketService {
    */
   static async getSectors(): Promise<SectorData[]> {
     try {
+      // 尝试从缓存获取
+      const cached = await cacheService.get<SectorData[]>(CacheKeys.MARKET_SECTORS);
+      if (cached) {
+        return cached;
+      }
+
       const url = 'https://push2.eastmoney.com/api/qt/clist/get';
       const response = await axios.get(url, {
         params: {
@@ -243,7 +270,7 @@ export class MarketService {
 
       const data = response.data;
       if (data.data?.diff) {
-        return data.data.diff.map((item: any) => ({
+        const result = data.data.diff.map((item: any) => ({
           code: item.f12,
           name: item.f14,
           change: item.f3 / 100 || 0,
@@ -253,6 +280,9 @@ export class MarketService {
           volume: item.f104 || 0,
           amount: item.f105 || 0,
         }));
+        // 缓存结果
+        await cacheService.set(CacheKeys.MARKET_SECTORS, result, CacheTTL.SECTORS);
+        return result;
       }
       return [];
     } catch (error) {
@@ -283,6 +313,12 @@ export class MarketService {
    */
   static async getMarketSentiment(): Promise<MarketSentiment | null> {
     try {
+      // 尝试从缓存获取
+      const cached = await cacheService.get<MarketSentiment>(CacheKeys.MARKET_SENTIMENT);
+      if (cached) {
+        return cached;
+      }
+
       const url = 'https://push2.eastmoney.com/api/qt/ulist.np/get';
       const response = await axios.get(url, {
         params: {
@@ -320,7 +356,7 @@ export class MarketService {
         else if (score <= 20) level = 'extreme_fear';
         else if (score <= 40) level = 'fear';
 
-        return {
+        const result = {
           date: new Date().toISOString().split('T')[0],
           advanceCount: advance,
           declineCount: decline,
@@ -331,6 +367,9 @@ export class MarketService {
           sentimentScore: Math.round(score),
           sentimentLevel: level,
         };
+        // 缓存结果
+        await cacheService.set(CacheKeys.MARKET_SENTIMENT, result, CacheTTL.SENTIMENT);
+        return result;
       }
       return null;
     } catch (error) {
@@ -344,6 +383,13 @@ export class MarketService {
    */
   static async getMoneyFlow(limit: number = 20): Promise<MoneyFlow[]> {
     try {
+      // 尝试从缓存获取
+      const cacheKey = `${CacheKeys.MONEY_FLOW}:${limit}`;
+      const cached = await cacheService.get<MoneyFlow[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const url = 'https://push2.eastmoney.com/api/qt/clist/get';
       const response = await axios.get(url, {
         params: {
@@ -358,7 +404,7 @@ export class MarketService {
 
       const data = response.data;
       if (data.data?.diff) {
-        return data.data.diff.map((item: any) => ({
+        const result = data.data.diff.map((item: any) => ({
           code: item.f12,
           name: item.f14,
           mainInflow: (item.f66 || 0) / 100000000,
@@ -367,6 +413,9 @@ export class MarketService {
           retailNet: (item.f69 || 0) / 100000000,
           totalNet: ((item.f62 || 0) + (item.f69 || 0)) / 100000000,
         }));
+        // 缓存结果
+        await cacheService.set(cacheKey, result, CacheTTL.MONEY_FLOW);
+        return result;
       }
       return [];
     } catch (error) {

@@ -23,7 +23,8 @@ export const tradeReviewTemplateController = {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const data = await tradeReviewTemplateService.update(req.userId!, req.params.id, req.body)
+      const { id } = req.params
+      const data = await tradeReviewTemplateService.update(req.userId!, id as string, req.body)
       res.json({ success: true, data })
     } catch (error) {
       res.status(500).json({ success: false, message: '更新复盘记录失败' })
@@ -32,7 +33,8 @@ export const tradeReviewTemplateController = {
 
   async delete(req: AuthRequest, res: Response) {
     try {
-      await tradeReviewTemplateService.delete(req.userId!, req.params.id)
+      const { id } = req.params
+      await tradeReviewTemplateService.delete(req.userId!, id as string)
       res.json({ success: true, message: '删除成功' })
     } catch (error) {
       res.status(500).json({ success: false, message: '删除复盘记录失败' })

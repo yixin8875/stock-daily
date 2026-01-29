@@ -1,23 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Form, Input, InputNumber, Select, Button, Table, Modal, Tag, Space } from 'antd'
+import { Card, Form, Input, InputNumber, Select, Button, Table, Modal, Tag, Space, message } from 'antd'
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
-import dayjs from 'dayjs'
+import { tradePlanTemplateService, type TradePlanTemplate as TradePlan } from '@/services'
 
 const { TextArea } = Input
-
-interface TradePlan {
-  id: string
-  stockCode: string
-  stockName: string
-  direction: 'buy' | 'sell'
-  entryPrice: number
-  targetPrice: number
-  stopPrice: number
-  positionSize: number
-  reason: string
-  status: 'pending' | 'executed' | 'cancelled'
-  createdAt: string
-}
 
 const TradePlanTemplate: React.FC = () => {
   const [plans, setPlans] = useState<TradePlan[]>([])
@@ -25,31 +11,36 @@ const TradePlanTemplate: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form] = Form.useForm()
 
-  useEffect(() => {
-    const saved = localStorage.getItem('tradePlans')
-    if (saved) setPlans(JSON.parse(saved))
-  }, [])
-
-  const savePlans = (newPlans: TradePlan[]) => {
-    setPlans(newPlans)
-    localStorage.setItem('tradePlans', JSON.stringify(newPlans))
+  const fetchPlans = async () => {
+    try {
+      const res = await tradePlanTemplateService.getAll()
+      if (res.data.success && res.data.data) {
+        setPlans(res.data.data)
+      }
+    } catch (error) {
+      console.error('加载交易计划失败:', error)
+    }
   }
 
-  const handleSubmit = () => {
-    form.validateFields().then((values) => {
+  useEffect(() => {
+    fetchPlans()
+  }, [])
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields()
       if (editingId) {
-        savePlans(plans.map((p) => p.id === editingId ? { ...p, ...values } : p))
+        await tradePlanTemplateService.update(editingId, values)
+        message.success('更新成功')
       } else {
-        const newPlan: TradePlan = {
-          id: Date.now().toString(),
-          ...values,
-          status: 'pending',
-          createdAt: dayjs().format('YYYY-MM-DD HH:mm'),
-        }
-        savePlans([...plans, newPlan])
+        await tradePlanTemplateService.create(values)
+        message.success('创建成功')
       }
       closeModal()
-    })
+      fetchPlans()
+    } catch (error) {
+      message.error('操作失败')
+    }
   }
 
   const closeModal = () => {
@@ -64,12 +55,23 @@ const TradePlanTemplate: React.FC = () => {
     setModalVisible(true)
   }
 
-  const handleDelete = (id: string) => {
-    savePlans(plans.filter((p) => p.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      await tradePlanTemplateService.delete(id)
+      message.success('删除成功')
+      fetchPlans()
+    } catch (error) {
+      message.error('删除失败')
+    }
   }
 
-  const handleStatusChange = (id: string, status: TradePlan['status']) => {
-    savePlans(plans.map((p) => p.id === id ? { ...p, status } : p))
+  const handleStatusChange = async (id: string, status: TradePlan['status']) => {
+    try {
+      await tradePlanTemplateService.update(id, { status })
+      fetchPlans()
+    } catch (error) {
+      message.error('更新状态失败')
+    }
   }
 
   const columns = [
